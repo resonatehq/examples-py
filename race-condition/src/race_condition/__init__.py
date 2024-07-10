@@ -45,6 +45,7 @@ def update_balance(
 def transaction(
     ctx: Context, source: int, target: int, amount: int
 ) -> Generator[Yieldable, Any, None]:
+    conn: Connection = ctx.deps.get("conn")
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:
@@ -61,3 +62,5 @@ def transaction(
         account_id=target,
         amount=amount,
     )
+
+    conn.commit()
