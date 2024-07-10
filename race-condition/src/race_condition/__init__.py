@@ -21,6 +21,7 @@ def current_balance(ctx: Context, account_id: int) -> int:  # noqa: ARG001
     balance: int = conn.execute(
         "SELECT balance FROM accounts WHERE account_id = ?", (account_id,)
     ).fetchone()[0]
+    conn.commit()
     return balance
 
 
@@ -40,12 +41,12 @@ def update_balance(
     )
 
     ctx.assert_statement(cur.rowcount == 1, msg="More that one row was affected")
+    conn.commit()
 
 
 def transaction(
     ctx: Context, source: int, target: int, amount: int
 ) -> Generator[Yieldable, Any, None]:
-    conn: Connection = ctx.deps.get("conn")
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:
@@ -62,5 +63,3 @@ def transaction(
         account_id=target,
         amount=amount,
     )
-
-    conn.commit()

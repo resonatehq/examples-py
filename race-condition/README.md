@@ -10,7 +10,6 @@ Consider the following code:
 def transaction(
     ctx: Context, source: int, target: int, amount: int
 ) -> Generator[Yieldable, Any, None]:
-    conn: Connection = ctx.deps.get("conn")
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:
@@ -27,8 +26,6 @@ def transaction(
         account_id=target,
         amount=amount,
     )
-
-    conn.commit()
 ```
 
 At first glance, this code appears to be free of bugs during a single execution. However, consider what happens if two concurrent executions read the balance in quick succession before any updates are made to the database. In such a scenario, the following invariant check:
