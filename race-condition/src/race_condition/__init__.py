@@ -17,7 +17,7 @@ class NotEnoughFundsError(Exception):
 
 
 def current_balance(ctx: Context, account_id: int) -> int:  # noqa: ARG001
-    conn: Connection = ctx.get_dependency("conn")
+    conn: Connection = ctx.deps.get("conn")
     balance: int = conn.execute(
         "SELECT balance FROM accounts WHERE account_id = ?", (account_id,)
     ).fetchone()[0]
@@ -29,7 +29,7 @@ def update_balance(
     account_id: int,
     amount: int,
 ) -> None:
-    conn: Connection = ctx.get_dependency("conn")
+    conn: Connection = ctx.deps.get("conn")
     cur = conn.execute(
         """
         UPDATE accounts
@@ -43,10 +43,8 @@ def update_balance(
 
 
 def transaction(
-    ctx: Context, conn: Connection, source: int, target: int, amount: int
+    ctx: Context, source: int, target: int, amount: int
 ) -> Generator[Yieldable, Any, None]:
-    ctx.set_dependency(key="conn", obj=conn)
-
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:

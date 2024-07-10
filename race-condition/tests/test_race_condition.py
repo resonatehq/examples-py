@@ -39,18 +39,18 @@ def test_race_condition(
 ) -> None:
     conn = setup_and_teardown
 
+    scheduler.deps.set("conn", conn)
+
     _ = scheduler.run(
         [
             partial(
                 race_condition.transaction,
-                conn=conn,
                 source=1,
                 target=2,
                 amount=100,
             ),
             partial(
                 race_condition.transaction,
-                conn=conn,
                 source=1,
                 target=2,
                 amount=70,
