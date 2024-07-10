@@ -8,10 +8,9 @@ Consider the following code:
 
 ```py
 def transaction(
-    ctx: Context, conn: Connection, source: int, target: int, amount: int
+    ctx: Context, source: int, target: int, amount: int
 ) -> Generator[Yieldable, Any, None]:
-    ctx.set_dependency(key="conn", obj=conn)
-
+    conn: Connection = ctx.deps.get("conn")
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:
@@ -28,6 +27,8 @@ def transaction(
         account_id=target,
         amount=amount,
     )
+
+    conn.commit()
 ```
 
 At first glance, this code appears to be free of bugs during a single execution. However, consider what happens if two concurrent executions read the balance in quick succession before any updates are made to the database. In such a scenario, the following invariant check:
@@ -54,25 +55,24 @@ def test_race_condition(
 ) -> None:
     conn = setup_and_teardown
 
+    scheduler.deps.set("conn", conn)
+
     _ = scheduler.run(
         [
             partial(
                 race_condition.transaction,
-                conn=conn,
                 source=1,
                 target=2,
                 amount=100,
             ),
             partial(
                 race_condition.transaction,
-                conn=conn,
                 source=1,
                 target=2,
                 amount=70,
             ),
         ]
     )
-    conn.commit()
 
     source_balance: int = conn.execute(
         "SELECT balance FROM accounts WHERE account_id = 1"
