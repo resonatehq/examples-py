@@ -21,13 +21,6 @@ def setup_and_teardown() -> Generator[sqlite3.Connection, None, None]:
     assert ans == (1,)
     conn.execute("DROP TABLE IF EXISTS accounts")
     conn.execute("CREATE TABLE accounts(account_id, balance)")
-    conn.execute(
-        """
-        INSERT INTO accounts VALUES
-        (1, 100),
-        (2, 0)
-        """
-    )
     conn.commit()
     yield conn
 
@@ -38,6 +31,13 @@ def test_race_condition(
     setup_and_teardown: sqlite3.Connection,
 ) -> None:
     conn = setup_and_teardown
+    conn.execute(
+        """
+        INSERT INTO accounts VALUES
+        (1, 100),
+        (2, 0)
+        """
+    )
 
     scheduler.deps.set("conn", conn)
 
