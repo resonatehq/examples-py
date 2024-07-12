@@ -1,15 +1,28 @@
-# Race Conditions
+# Detecting Race Conditions
 
-Transitioning from synchronous to asynchronous programming introduces concurrency. Concurrency, in turn, introduces the possibility of a *race condition*.
+Transitioning from synchronous to asynchronous systems introduces concurrency—and concurrency introduces the possibility of race conditions. A system contains a race condition if the concurrent execution of its processes contains at least one execution order that is considered incorrect. This example explores how Resonate's Determinisitic Simulation Testing capabilities enable you to detect and address concurrency issues such as race conditions.
 
-A race condition occurs when the concurrent execution of a program results in unexpected behavior due to the timing of events. This bug does not appear during a single execution but manifests when specific sequences of steps occur concurrently.
+## Deterministic Simulation Testing
+
+Deterministic Simulation Testing repeatedly executes an application in a simulated environment under changing initial conditions, monitoring that the correctness constraints are maintained across executions. In practice the changing initial conditions are determined by the seed for a pseudo random number generator that the simulator uses to drive the system forward.
+
+**With this you can reproduce an entire execution by restarting the system with the same random seed. No more Heisenbugs. No more flakey tests.**
+
+![Deterministic Simulation Testing](./doc/img/dst.png)
+
+> [!NOTE]
+> Learn more about [Deterministic Simulation Testing](https://blog.resonatehq.io/deterministic-simulation-testing)
+
+
+## Race Conditions
+
+A system contains a race condition if the concurrent composition of its processes, contains at least one execution order that is considered incorrect. The canonical example for a race condition is a Money Transfer: A transfer moves an amount from a source account to a target account while guaranteeing that the source account maintains a non-negative balance. 
 
 Consider the following code:
 
 ```py
-def transaction(
-    ctx: Context, source: int, target: int, amount: int
-) -> Generator[Yieldable, Any, None]:
+def transfer(ctx: Context, source: int, target: int, amount: int) -> Generator[Yieldable, Any, None]:
+    
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:
@@ -28,21 +41,23 @@ def transaction(
     )
 ```
 
-At first glance, this code appears to be free of bugs during a single execution. However, consider what happens if two concurrent executions read the balance in quick succession before any updates are made to the database. In such a scenario, the following invariant check:
+> [!NOTE]
+> transfer does not run in the context of a database transaction; instead, every call to current_balance and update_balance runs in the context of an individual database transaction.
 
-```py
-if source_balance - amount < 0:
-    raise NotEnoughFundsError(account_id=source)
-```
+This code contains a race condition! If two transfers read the balance before any one of them updates the balance, both proceed based on the same balance, leading to incorrect results. For example, if `Account` and `Account2` both start with a balance of `100`, the following execution order violates our correctness constraint.
 
-would fail to prevent the system from reaching an undesirable state. This is because both executions might read the same balance and proceed to make updates based on an outdated state, leading to inconsistent or incorrect results.
+| `transfer(Account1, Account2, 100)` | `transfer(Account1, Account2, 100)` |
+| ----------------------------------- | ----------------------------------- |
+| `current_balance(Account1) = 100`   |                                     |
+|                                     | `current_balance(Account1) =  100`  |
+| `update_balance(Account1, -100)`    |                                     |
+|                                     | `update_balance(Account1, -100)`    |
+| `update_balance(Account2, +100)`    |                                     |
+|                                     | `update_balance(Account2, +100)`    |
 
+### Using Resonate DST to Detect Race Conditions
 
-### Using Resonate DST to Prevent Race Conditions
-
-To effectively test for race conditions, we can use the Resonate SDK. This library facilitates testing concurrent executions, which is crucial for cloud applications but often overlooked. It also allows for deterministic randomization of possible combinations of concurrent executions, helping to ensure that your application does not end up in an undesired state due to race conditions.
-
-Here's an example of how to use Resonate DST to test for race conditions:
+Resonate natively implements Deterministic Simulation Testing and integrates into your prefered testing framework like pytest. Here's an example of how to use Resonate DST to test for race conditions:
 
 ```py
 @pytest.mark.parametrize("scheduler", resonate.testing.dst([range(5)]))
@@ -98,17 +113,8 @@ rye test
 ```
 
 ### Using pip
-1. Setup project's virtual environment
-```zsh
-python -m venv .venv
-```
 
-2. Activate virtual env
-```zsh
-source .venv/bin/activate
-```
-
-3. Install dependencies
+1. Install dependencies
 ```zsh
 pip install -r requirements-dev.lock
 ```
@@ -118,4 +124,12 @@ pip install -r requirements-dev.lock
 pytest
 ```
 
-***Note:*** Some tests fail. For the `test_race_condition` only seed `0` and `1` succeed.
+### Result
+
+When you run this test, you will get the following result
+
+```
+FAILED tests/test_race_condition.py::test_race_condition[scheduler2] - AssertionError: Seed 2 causes a failure
+FAILED tests/test_race_condition.py::test_race_condition[scheduler3] - AssertionError: Seed 3 causes a failure
+FAILED tests/test_race_condition.py::test_race_condition[scheduler4] - AssertionError: Seed 4 causes a failure
+```
