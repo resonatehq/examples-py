@@ -45,42 +45,37 @@ To effectively test for race conditions, we can use the Resonate SDK. This libra
 Here's an example of how to use Resonate DST to test for race conditions:
 
 ```py
-@pytest.mark.parametrize("scheduler", resonate.testing.dst([range(20)]))
+@pytest.mark.parametrize("scheduler", resonate.testing.dst([range(5)]))
 def test_race_condition(
-    scheduler: DSTScheduler,
-    setup_and_teardown: sqlite3.Connection,
+    scheduler: DSTScheduler, setup_and_teardown: sqlite3.Connection
 ) -> None:
     conn = setup_and_teardown
 
+    new_accounts = range(1, 4)
+    balance_at_creation = 100
+    for i in new_accounts:
+        conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, balance_at_creation))
+    conn.commit()
+
     scheduler.deps.set("conn", conn)
 
-    _ = scheduler.run(
+    scheduler.run(
         [
             partial(
                 race_condition.transaction,
-                source=1,
-                target=2,
-                amount=100,
-            ),
-            partial(
-                race_condition.transaction,
-                source=1,
-                target=2,
-                amount=70,
-            ),
+                source=scheduler.random.choice(new_accounts),
+                target=scheduler.random.choice(new_accounts),
+                amount=scheduler.random.randint(0, 200),
+            )
+            for _ in range(1000)
         ]
     )
 
-    source_balance: int = conn.execute(
-        "SELECT balance FROM accounts WHERE account_id = 1"
-    ).fetchone()[0]
-    target_balance: int = conn.execute(
-        "SELECT balance FROM accounts WHERE account_id = 2"
+    accounts_in_negative: int = conn.execute(
+        "SELECT COUNT(*) FROM accounts WHERE balance < 0"
     ).fetchone()[0]
 
-    assert (
-        source_balance == 0 and target_balance == 100
-    ), f"Seed {scheduler.seed} causes a failure"
+    assert accounts_in_negative == 0, f"Seed {scheduler.seed} causes a failure"
 ```
 
 ### Benefits of Using Resonate DST
