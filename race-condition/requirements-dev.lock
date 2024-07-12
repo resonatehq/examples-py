@@ -20,7 +20,7 @@ packaging==24.1
 pluggy==1.5.0
     # via pytest
 pytest==8.2.2
-resonate-sdk==0.1.1
+resonate-sdk==0.1.2
     # via race-condition
 result==0.17.0
     # via resonate-sdk

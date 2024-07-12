@@ -86,3 +86,41 @@ def test_race_condition(
 ### Benefits of Using Resonate DST
 - Simplified Concurrent Testing: Resonate DST simplifies the process of testing concurrent executions, making it more accessible and routine for cloud application testing.
 - Deterministic Simulation Testing: By randomizing the possible combinations of concurrent executions deterministically, Resonate DST helps identify race conditions that might otherwise be missed, ensuring the robustness of your application.
+
+
+## How to run
+
+### Using [rye](https://rye.astral.sh) (Recommended)
+
+1. Setup project's virtual environment and install dependencies
+```zsh
+rye sync
+```
+
+2. Run tests
+```zsh
+rye test
+```
+
+### Using pip
+1. Setup project's virtual environment
+```zsh
+python -m venv .venv
+```
+
+2. Activate virtual env
+```zsh
+source .venv/bin/activate
+```
+
+3. Install dependencies
+```zsh
+pip install -r requirements-dev.lock
+```
+
+4. Run tests
+```zsh
+pytest
+```
+
+***Note:*** Some tests fail. For the `test_money_destruction` only seed `0` and `1` succeed and for the `test_race_condition` only seed `15` succeed
