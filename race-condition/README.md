@@ -123,4 +123,4 @@ pip install -r requirements-dev.lock
 pytest
 ```
 
-***Note:*** Some tests fail. For the `test_money_destruction` only seed `0` and `1` succeed and for the `test_race_condition` only seed `15` succeed
+***Note:*** Some tests fail. For the `test_race_condition` only seed `0` and `1` succeed.
