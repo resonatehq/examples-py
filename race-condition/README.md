@@ -1,12 +1,12 @@
 # Detecting Race Conditions
 
-Transitioning from synchronous to asynchronous systems introduces concurrency—and concurrency introduces the possibility of race conditions. A system contains a race condition if the concurrent execution of its processes contains at least one execution order that is considered incorrect. This example explores how Resonate's Determinisitic Simulation Testing capabilities enable you to detect and address concurrency issues such as race conditions.
+**tl;dr** This example explores how Resonate's **Determinisitic Simulation Testing** capabilities enable you to detect and address a variety of concurrency issues such as race conditions.
 
 ## Deterministic Simulation Testing
 
-Deterministic Simulation Testing repeatedly executes an application in a simulated environment under changing initial conditions, monitoring that the correctness constraints are maintained across executions. In practice the changing initial conditions are determined by the seed for a pseudo random number generator that the simulator uses to drive the system forward.
+Deterministic Simulation Testing repeatedly executes an application in a simulated environment under changing initial conditions, monitoring that the correctness constraints are maintained across executions. The varying initial conditions, such as execution order of concurrent executions, are determined by the seed for a pseudo-random number generator, which the simulator uses to drive the system forward.
 
-**With this you can reproduce an entire execution by restarting the system with the same random seed. No more Heisenbugs. No more flakey tests.**
+With this approach, you can reproduce an entire execution by restarting the system with the same random seed. No more Heisenbugs. No more flaky tests.
 
 ![Deterministic Simulation Testing](./doc/img/dst.png)
 
@@ -16,9 +16,7 @@ Deterministic Simulation Testing repeatedly executes an application in a simulat
 
 ## Race Conditions
 
-A system contains a race condition if the concurrent composition of its processes, contains at least one execution order that is considered incorrect. The canonical example for a race condition is a Money Transfer: A transfer moves an amount from a source account to a target account while guaranteeing that the source account maintains a non-negative balance. 
-
-Consider the following code:
+A system contains a race condition if the concurrent composition of its executions includes at least one execution order that is considered incorrect. A classic example of a race condition is a Money Transfer. The goal is to move an amount from a source account to a target account while ensuring the source account maintains a non-negative balance. Let's examine a flawed implementation:
 
 ```py
 def transfer(ctx: Context, source: int, target: int, amount: int) -> Generator[Yieldable, Any, None]:
@@ -44,16 +42,7 @@ def transfer(ctx: Context, source: int, target: int, amount: int) -> Generator[Y
 > [!NOTE]
 > transfer does not run in the context of a database transaction; instead, every call to current_balance and update_balance runs in the context of an individual database transaction.
 
-This code contains a race condition! If two transfers read the balance before any one of them updates the balance, both proceed based on the same balance, leading to incorrect results. For example, if `Account` and `Account2` both start with a balance of `100`, the following execution order violates our correctness constraint.
-
-| `transfer(Account1, Account2, 100)` | `transfer(Account1, Account2, 100)` |
-| ----------------------------------- | ----------------------------------- |
-| `current_balance(Account1) = 100`   |                                     |
-|                                     | `current_balance(Account1) =  100`  |
-| `update_balance(Account1, -100)`    |                                     |
-|                                     | `update_balance(Account1, -100)`    |
-| `update_balance(Account2, +100)`    |                                     |
-|                                     | `update_balance(Account2, +100)`    |
+This code contains a race condition! If two transfers read the balance before any one of them updates the balance, both proceed based on the same balance, leading to incorrect results. For example, if `Account 1` starts with a balance of 100, and two concurrent transfers try to move 100 from `Account 1` to `Account 2`, both transfers might read the initial balance of 100 before either updates the balance. This would result in `Account 1` being overdrawn, violating our correctness constraint.
 
 ### Using Resonate DST to Detect Race Conditions
 
