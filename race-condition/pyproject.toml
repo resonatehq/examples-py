@@ -6,7 +6,7 @@ authors = [
     { name = "Resonate HQ, Inc", email = "contact@resonatehq.io" }
 ]
 dependencies = [
-    "resonate-sdk >= 0.1.2",
+    "resonate-sdk >= 0.1.4",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -35,8 +35,7 @@ packages = ["src/race_condition"]
 testpaths = ["tests"]
 xfail_strict = true
 addopts = [
-    "--import-mode=importlib",
-    "--log-cli-level=DEBUG"
+    "--import-mode=importlib"
 ]
 
 [tool.ruff.lint.per-file-ignores]
