@@ -49,8 +49,9 @@ def update_balance_ensure_version(
     ctx: Context, transfer_id: int, account_id: int, amount: int, version: int
 ) -> None:
     conn: Connection = ctx.deps.get("conn")
-    _register_transfer(
-        conn=conn, transfer_id=transfer_id, account_id=account_id, amount=amount
+    conn.execute(
+        "INSERT INTO transfer (transfer_id, account_id, amount) VALUES (?, ?, ?)",
+        (transfer_id, account_id, amount),
     )
     cur = conn.execute(
         """
@@ -68,22 +69,14 @@ def update_balance_ensure_version(
     ctx.assert_statement(cur.rowcount == 1, msg="More that one row was affected")
 
 
-def _register_transfer(
-    conn: Connection, transfer_id: int, account_id: int, amount: int
-) -> None:
-    conn.execute(
-        "INSERT INTO transfer (transfer_id, account_id, amount) VALUES (?, ?, ?)",
-        (transfer_id, account_id, amount),
-    )
-
-
 def update_balance(
     ctx: Context, transfer_id: int, account_id: int, amount: int
 ) -> None:
     conn: Connection = ctx.deps.get("conn")
 
-    _register_transfer(
-        conn=conn, transfer_id=transfer_id, account_id=account_id, amount=amount
+    conn.execute(
+        "INSERT INTO transfer (transfer_id, account_id, amount) VALUES (?, ?, ?)",
+        (transfer_id, account_id, amount),
     )
 
     cur = conn.execute(
