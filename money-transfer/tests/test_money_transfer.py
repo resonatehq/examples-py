@@ -7,7 +7,6 @@ import pytest
 import money_transfer
 import resonate
 
-import money_transfer.optimistic_rollback
 
 if TYPE_CHECKING:
     from resonate.scheduler.dst import DSTScheduler
@@ -201,7 +200,7 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
     scheduler.deps.set("conn", conn)
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
-            money_transfer.optimistic_rollback.transaction,
+            money_transfer.optimistic_locking_and_rollback.transaction,
             transfer_id=i,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
