@@ -144,7 +144,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
-        failure_chance=0.2,
+        failure_chance=0.3,
         max_failures=1_000,
     ),
 )
