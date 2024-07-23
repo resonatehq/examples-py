@@ -14,3 +14,6 @@ wheels/
 
 # dst_logs
 .logs
+
+# mypy
+.dmypy.json
