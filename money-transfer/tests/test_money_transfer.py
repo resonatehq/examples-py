@@ -49,9 +49,7 @@ def check_invariants(
         if not p.success():
             try:
                 p.result()
-            except errors.NotEnoughFundsError:
-                continue
-            except errors.VersionConflictError:
+            except (errors.NotEnoughFundsError, errors.VersionConflictError):
                 continue
 
         source_target_amount: tuple[int, int, int] = p.result()
