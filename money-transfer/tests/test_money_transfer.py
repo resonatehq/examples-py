@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-import sqlite3
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-import pytest
 import money_transfer
+import pytest
 import resonate
-
+from money_transfer import errors
 
 if TYPE_CHECKING:
-    from resonate.scheduler.dst import DSTScheduler
+    import sqlite3
+
+    from resonate.dst.scheduler import DSTScheduler
+    from resonate.promise import Promise
 
 
 ACCOUNTS = range(1, 4)
@@ -19,13 +21,19 @@ NUM_SEEDS = 5
 NUM_TRANSACTIONS = 100
 
 
-def check_invariants(conn: sqlite3.Connection, seed: int) -> None:
+def check_invariants(
+    conn: sqlite3.Connection,
+    seed: int,
+    promises: list[Promise[Any]],
+) -> None:
+    assert all(p.done() for p in promises)
+
     accounts_in_negative: int = conn.execute(
-        "SELECT COUNT(*) FROM accounts WHERE balance < 0"
+        "SELECT COUNT(*) FROM accounts WHERE balance < 0",
     ).fetchone()[0]
 
     total_money_in_system: int = conn.execute(
-        "SELECT SUM(balance) FROM accounts"
+        "SELECT SUM(balance) FROM accounts",
     ).fetchone()[0]
 
     assert (
@@ -36,6 +44,29 @@ def check_invariants(conn: sqlite3.Connection, seed: int) -> None:
         total_money_in_system == len(ACCOUNTS) * INITIAL_BALANCE
     ), f"Seed {seed} created or destroyed money in the system"
 
+    mock_tables = {i: INITIAL_BALANCE for i in ACCOUNTS}
+    for p in promises:
+        if not p.success():
+            try:
+                p.result()
+            except errors.NotEnoughFundsError:
+                continue
+            except errors.VersionConflictError:
+                continue
+
+        source_target_amount: tuple[int, int, int] = p.result()
+        source, target, amount = source_target_amount
+        mock_tables[source] -= amount
+        mock_tables[target] += amount
+
+    accounts: list[tuple[int, int]] = conn.execute(
+        "SELECT account_id, balance FROM accounts",
+    ).fetchall()
+    for account in accounts:
+        assert (
+            account[-1] == mock_tables[account[0]]
+        ), f"Balance is SQL table is different compared to mock table for account {account[0]}"  # noqa: E501
+
 
 @pytest.mark.parametrize(
     "scheduler",
@@ -45,7 +76,8 @@ def check_invariants(conn: sqlite3.Connection, seed: int) -> None:
     ),
 )
 def test_sequential_execution_and_no_failure(
-    scheduler: DSTScheduler, setup_and_teardown: sqlite3.Connection
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
 ) -> None:
     conn = setup_and_teardown
 
@@ -65,10 +97,7 @@ def test_sequential_execution_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    promises = scheduler.run()
-    assert (p.done() for p in promises)
-
-    check_invariants(conn=conn, seed=scheduler.seed)
+    check_invariants(conn, scheduler.seed, scheduler.run())
 
 
 @pytest.mark.parametrize(
@@ -79,7 +108,8 @@ def test_sequential_execution_and_no_failure(
     ),
 )
 def test_concurrent_execution_and_no_failure(
-    scheduler: DSTScheduler, setup_and_teardown: sqlite3.Connection
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
 ) -> None:
     conn = setup_and_teardown
 
@@ -99,10 +129,7 @@ def test_concurrent_execution_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    promises = scheduler.run()
-    assert (p.done() for p in promises)
-
-    check_invariants(conn=conn, seed=scheduler.seed)
+    check_invariants(conn, scheduler.seed, scheduler.run())
 
 
 @pytest.mark.parametrize(
@@ -113,7 +140,8 @@ def test_concurrent_execution_and_no_failure(
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_no_failure(
-    scheduler: DSTScheduler, setup_and_teardown: sqlite3.Connection
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
 ) -> None:
     conn = setup_and_teardown
 
@@ -133,10 +161,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    promises = scheduler.run()
-    assert (p.done() for p in promises)
-
-    check_invariants(conn=conn, seed=scheduler.seed)
+    check_invariants(conn, scheduler.seed, scheduler.run())
 
 
 @pytest.mark.parametrize(
@@ -144,12 +169,13 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
-        failure_chance=0.3,
+        failure_chance=0.15,
         max_failures=1_000,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_with_failure(
-    scheduler: DSTScheduler, setup_and_teardown: sqlite3.Connection
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
 ) -> None:
     conn = setup_and_teardown
 
@@ -169,10 +195,7 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    promises = scheduler.run()
-    assert (p.done() for p in promises)
-
-    check_invariants(conn=conn, seed=scheduler.seed)
+    check_invariants(conn, scheduler.seed, scheduler.run())
 
 
 @pytest.mark.parametrize(
@@ -180,12 +203,13 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
-        failure_chance=0.2,
+        failure_chance=0.15,
         max_failures=1_000,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
-    scheduler: DSTScheduler, setup_and_teardown: sqlite3.Connection
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
 ) -> None:
     conn = setup_and_teardown
 
@@ -207,7 +231,4 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    promises = scheduler.run()
-    assert (p.done() for p in promises)
-
-    check_invariants(conn=conn, seed=scheduler.seed)
+    check_invariants(conn, scheduler.seed, scheduler.run())

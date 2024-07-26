@@ -1,32 +1,32 @@
 from __future__ import annotations
 
-from sqlite3 import Connection
 from typing import TYPE_CHECKING, Any
 
-from resonate.typing import Yieldable
+from money_transfer import errors
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from sqlite3 import Connection
 
     from resonate.context import Context
+    from resonate.typing import Yieldable
 
 
-class NotEnoughFundsError(Exception):
-    def __init__(self, account_id: int) -> None:
-        super().__init__(f"Account {account_id} does not have enough money")
-
-
-def current_balance(ctx: Context, account_id: int) -> tuple[int, int]:  # noqa: ARG001
+def current_balance(ctx: Context, account_id: int) -> tuple[int, int]:
     conn: Connection = ctx.deps.get("conn")
     balance, version = conn.execute(
-        "SELECT balance, version FROM accounts WHERE account_id = ?", (account_id,)
+        "SELECT balance, version FROM accounts WHERE account_id = ?",
+        (account_id,),
     ).fetchone()
     conn.commit()
     return balance, version
 
 
 def update_balance_ensure_version(
-    ctx: Context, account_id: int, amount: int, version: int
+    ctx: Context,
+    account_id: int,
+    amount: int,
+    version: int,
 ) -> None:
     conn: Connection = ctx.deps.get("conn")
     cur = conn.execute(
@@ -41,7 +41,7 @@ def update_balance_ensure_version(
     )
     conn.commit()
     if cur.rowcount == 0:
-        raise RuntimeError("Someone else got here first! :(")
+        raise errors.VersionConflictError
     ctx.assert_statement(cur.rowcount == 1, msg="More that one row was affected")
 
 
@@ -63,15 +63,19 @@ def update_balance(ctx: Context, account_id: int, amount: int) -> None:
 
 
 def transaction(
-    ctx: Context, source: int, target: int, amount: int
-) -> Generator[Yieldable, Any, None]:
+    ctx: Context,
+    source: int,
+    target: int,
+    amount: int,
+) -> Generator[Yieldable, Any, tuple[int, int, int]]:
     source_balance_and_version: tuple[int, int] = yield ctx.call(
-        current_balance, account_id=source
+        current_balance,
+        account_id=source,
     )
     source_balance, version = source_balance_and_version
 
     if source_balance - amount < 0:
-        raise NotEnoughFundsError(account_id=source)
+        raise errors.NotEnoughFundsError(account_id=source)
 
     yield ctx.call(
         update_balance_ensure_version,
@@ -81,3 +85,4 @@ def transaction(
     )
 
     yield ctx.call(update_balance, account_id=target, amount=amount)
+    return source, target, amount

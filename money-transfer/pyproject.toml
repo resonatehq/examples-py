@@ -6,7 +6,7 @@ authors = [
     { name = "Resonate HQ, Inc", email = "contact@resonatehq.io" }
 ]
 dependencies = [
-    "resonate-sdk >= 0.1.5",
+    "resonate-sdk >= 0.1.10",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -36,6 +36,19 @@ testpaths = ["tests"]
 xfail_strict = true
 addopts = [
     "--import-mode=importlib"
+]
+
+[tool.ruff]
+unsafe-fixes = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",
+    "ANN101",
+    "COM812",
+    "ISC001",
+    "S101"
 ]
 
 [tool.ruff.lint.per-file-ignores]

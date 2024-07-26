@@ -1,25 +1,22 @@
 from __future__ import annotations
 
-from sqlite3 import Connection
 from typing import TYPE_CHECKING, Any
 
-from resonate.typing import Yieldable
+from money_transfer import errors
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from sqlite3 import Connection
 
     from resonate.context import Context
+    from resonate.typing import Yieldable
 
 
-class NotEnoughFundsError(Exception):
-    def __init__(self, account_id: int) -> None:
-        super().__init__(f"Account {account_id} does not have enough money")
-
-
-def current_balance(ctx: Context, account_id: int) -> int:  # noqa: ARG001
+def current_balance(ctx: Context, account_id: int) -> int:
     conn: Connection = ctx.deps.get("conn")
     balance: int = conn.execute(
-        "SELECT balance FROM accounts WHERE account_id = ?", (account_id,)
+        "SELECT balance FROM accounts WHERE account_id = ?",
+        (account_id,),
     ).fetchone()[0]
     conn.commit()
     return balance
@@ -45,12 +42,15 @@ def update_balance(
 
 
 def transaction(
-    ctx: Context, source: int, target: int, amount: int
-) -> Generator[Yieldable, Any, None]:
+    ctx: Context,
+    source: int,
+    target: int,
+    amount: int,
+) -> Generator[Yieldable, Any, tuple[int, int, int]]:
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:
-        raise NotEnoughFundsError(account_id=source)
+        raise errors.NotEnoughFundsError(account_id=source)
 
     yield ctx.call(
         update_balance,
@@ -63,3 +63,4 @@ def transaction(
         account_id=target,
         amount=amount,
     )
+    return source, target, amount

@@ -19,11 +19,9 @@ packaging==24.1
     # via pytest
 pluggy==1.5.0
     # via pytest
-pytest==8.3.1
-resonate-sdk==0.1.7
+pytest==8.3.2
+resonate-sdk==0.1.9
     # via money-transfer
-result==0.17.0
-    # via resonate-sdk
 tomli==2.0.1
     # via mypy
     # via pytest
