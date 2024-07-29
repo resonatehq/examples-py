@@ -6,3 +6,8 @@ class NotEnoughFundsError(Exception):
 class VersionConflictError(Exception):
     def __init__(self) -> None:
         super().__init__("Someone else got here first.")
+
+
+class SameAccountTransferError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Target and source account must be different.")

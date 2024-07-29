@@ -1,15 +1,14 @@
 [project]
-name = "money-transfer"
+name = "batching"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
-    { name = "Resonate HQ, Inc", email = "contact@resonatehq.io" }
+    { name = "Tomperez98", email = "tomasperezalvarez@gmail.com" }
 ]
 dependencies = [
     "resonate-sdk @ file:///Users/tomasperez/Documents/resonate/resonate-sdk-py",
 ]
-readme = "README.md"
-requires-python = ">= 3.10"
+requires-python = ">= 3.12"
 
 [build-system]
 requires = ["hatchling"]
@@ -18,18 +17,19 @@ build-backend = "hatchling.build"
 [tool.rye.scripts]
 check-types = "dmypy run --timeout 60 -- src tests"
 
+
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "pytest>=8.2.2",
-    "mypy>=1.10.1",
+    "pytest>=8.3.2",
+    "mypy>=1.11.0",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/money_transfer"]
+packages = ["src/batching"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

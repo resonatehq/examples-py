@@ -47,6 +47,9 @@ def transaction(
     target: int,
     amount: int,
 ) -> Generator[Yieldable, Any, tuple[int, int, int]]:
+    if source == target:
+        raise errors.SameAccountTransferError
+
     source_balance: int = yield ctx.call(current_balance, account_id=source)
 
     if source_balance - amount < 0:

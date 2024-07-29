@@ -9,7 +9,9 @@ from money_transfer import errors
 
 if TYPE_CHECKING:
     import sqlite3
+    from sqlite3 import Connection
 
+    from resonate.dependency_injection import Dependencies
     from resonate.dst.scheduler import DSTScheduler
     from resonate.promise import Promise
 
@@ -21,24 +23,37 @@ NUM_SEEDS = 5
 NUM_TRANSACTIONS = 100
 
 
+def check_database_state(
+    deps: Dependencies,
+    tick: int,  # noqa: ARG001
+) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
+    conn: Connection = deps.get("conn")
+    return conn.execute(
+        "SELECT account_id, balance FROM accounts ORDER BY account_id"
+    ).fetchall(), conn.execute(
+        "SELECT account_id, SUM(amount) FROM transfers GROUP BY account_id"
+    ).fetchall()
+
+
 def check_invariants(
     conn: sqlite3.Connection,
     seed: int,
     promises: list[Promise[Any]],
+    *,
+    with_transfers: bool,
 ) -> None:
     assert all(p.done() for p in promises)
 
     accounts_in_negative: int = conn.execute(
         "SELECT COUNT(*) FROM accounts WHERE balance < 0",
     ).fetchone()[0]
+    assert (
+        accounts_in_negative == 0
+    ), f"Seed {seed} causes a accounts to get in the negatives"
 
     total_money_in_system: int = conn.execute(
         "SELECT SUM(balance) FROM accounts",
     ).fetchone()[0]
-
-    assert (
-        accounts_in_negative == 0
-    ), f"Seed {seed} causes a accounts to get in the negatives"
 
     assert (
         total_money_in_system == len(ACCOUNTS) * INITIAL_BALANCE
@@ -49,7 +64,11 @@ def check_invariants(
         if not p.success():
             try:
                 p.result()
-            except (errors.NotEnoughFundsError, errors.VersionConflictError):
+            except (
+                errors.NotEnoughFundsError,
+                errors.VersionConflictError,
+                errors.SameAccountTransferError,
+            ):
                 continue
 
         source_target_amount: tuple[int, int, int] = p.result()
@@ -65,6 +84,9 @@ def check_invariants(
             account[-1] == mock_tables[account[0]]
         ), f"Balance is SQL table is different compared to mock table for account {account[0]}"  # noqa: E501
 
+    if with_transfers:
+        assert conn.execute("SELECT SUM(amount) FROM transfers").fetchone()[0] == 0
+
 
 @pytest.mark.parametrize(
     "scheduler",
@@ -79,12 +101,12 @@ def test_sequential_execution_and_no_failure(
 ) -> None:
     conn = setup_and_teardown
 
-    conn.execute("CREATE TABLE accounts(account_id, balance)")
-    conn.commit()
+    with conn:
+        conn.execute("CREATE TABLE accounts(account_id, balance)")
 
-    for i in ACCOUNTS:
-        conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, INITIAL_BALANCE))
-    conn.commit()
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, INITIAL_BALANCE))
 
     scheduler.deps.set("conn", conn)
     for _ in range(NUM_TRANSACTIONS):
@@ -95,7 +117,12 @@ def test_sequential_execution_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(conn, scheduler.seed, scheduler.run())
+    check_invariants(
+        conn,
+        scheduler.seed,
+        scheduler.run(),
+        with_transfers=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -111,12 +138,12 @@ def test_concurrent_execution_and_no_failure(
 ) -> None:
     conn = setup_and_teardown
 
-    conn.execute("CREATE TABLE accounts(account_id, balance)")
-    conn.commit()
+    with conn:
+        conn.execute("CREATE TABLE accounts(account_id, balance)")
 
-    for i in ACCOUNTS:
-        conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, INITIAL_BALANCE))
-    conn.commit()
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, INITIAL_BALANCE))
 
     scheduler.deps.set("conn", conn)
     for _ in range(NUM_TRANSACTIONS):
@@ -127,7 +154,12 @@ def test_concurrent_execution_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(conn, scheduler.seed, scheduler.run())
+    check_invariants(
+        conn,
+        scheduler.seed,
+        scheduler.run(),
+        with_transfers=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -143,12 +175,14 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
 ) -> None:
     conn = setup_and_teardown
 
-    conn.execute("CREATE TABLE accounts(account_id, balance, version)")
-    conn.commit()
+    with conn:
+        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
 
-    for i in ACCOUNTS:
-        conn.execute("INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0))
-    conn.commit()
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute(
+                "INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0)
+            )
 
     scheduler.deps.set("conn", conn)
     for _ in range(NUM_TRANSACTIONS):
@@ -159,7 +193,12 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(conn, scheduler.seed, scheduler.run())
+    check_invariants(
+        conn,
+        scheduler.seed,
+        scheduler.run(),
+        with_transfers=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -167,7 +206,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
-        failure_chance=0.15,
+        failure_chance=0.6,
         max_failures=1_000,
     ),
 )
@@ -177,12 +216,14 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
 ) -> None:
     conn = setup_and_teardown
 
-    conn.execute("CREATE TABLE accounts(account_id, balance, version)")
-    conn.commit()
+    with conn:
+        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
 
-    for i in ACCOUNTS:
-        conn.execute("INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0))
-    conn.commit()
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute(
+                "INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0)
+            )
 
     scheduler.deps.set("conn", conn)
     for _ in range(NUM_TRANSACTIONS):
@@ -193,16 +234,22 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(conn, scheduler.seed, scheduler.run())
+    check_invariants(
+        conn,
+        scheduler.seed,
+        scheduler.run(),
+        with_transfers=False,
+    )
 
 
 @pytest.mark.parametrize(
     "scheduler",
     resonate.testing.dst(
-        [range(NUM_SEEDS)],
+        seeds=[range(NUM_SEEDS)],
         mode="concurrent",
         failure_chance=0.15,
         max_failures=1_000,
+        probe=check_database_state,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
@@ -211,13 +258,15 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
 ) -> None:
     conn = setup_and_teardown
 
-    conn.execute("CREATE TABLE transfers(transfer_id, account_id, amount)")
-    conn.execute("CREATE TABLE accounts(account_id, balance, version)")
-    conn.commit()
+    with conn:
+        conn.execute("CREATE TABLE transfers(transfer_id, account_id, amount)")
+        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
 
-    for i in ACCOUNTS:
-        conn.execute("INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0))
-    conn.commit()
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute(
+                "INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0)
+            )
 
     scheduler.deps.set("conn", conn)
     for i in range(NUM_TRANSACTIONS):
@@ -228,5 +277,9 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
             target=scheduler.random.choice(ACCOUNTS),
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
-
-    check_invariants(conn, scheduler.seed, scheduler.run())
+    check_invariants(
+        conn,
+        scheduler.seed,
+        scheduler.run(),
+        with_transfers=True,
+    )

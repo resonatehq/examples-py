@@ -8,8 +8,6 @@
 #   with-sources: false
 
 -e file:.
-exceptiongroup==1.2.2
-    # via pytest
 iniconfig==2.0.0
     # via pytest
 mypy==1.11.0
@@ -21,10 +19,7 @@ pluggy==1.5.0
     # via pytest
 pytest==8.3.2
 resonate-sdk @ file:///Users/tomasperez/Documents/resonate/resonate-sdk-py
-    # via money-transfer
-tomli==2.0.1
-    # via mypy
-    # via pytest
+    # via batching
 typing-extensions==4.12.2
     # via mypy
     # via resonate-sdk
