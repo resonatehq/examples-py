@@ -6,7 +6,7 @@ authors = [
     { name = "Tomperez98", email = "tomasperezalvarez@gmail.com" }
 ]
 dependencies = [
-    "resonate-sdk @ file:///Users/tomasperez/Documents/resonate/resonate-sdk-py",
+    "resonate-sdk >= 0.1.12",
 ]
 requires-python = ">= 3.12"
 

@@ -20,7 +20,7 @@ packaging==24.1
 pluggy==1.5.0
     # via pytest
 pytest==8.3.2
-resonate-sdk @ file:///Users/tomasperez/Documents/resonate/resonate-sdk-py
+resonate-sdk==0.1.12
     # via money-transfer
 tomli==2.0.1
     # via mypy

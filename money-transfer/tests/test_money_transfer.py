@@ -9,9 +9,7 @@ from money_transfer import errors
 
 if TYPE_CHECKING:
     import sqlite3
-    from sqlite3 import Connection
 
-    from resonate.dependency_injection import Dependencies
     from resonate.dst.scheduler import DSTScheduler
     from resonate.promise import Promise
 
@@ -21,18 +19,6 @@ INITIAL_BALANCE = 100
 MAX_TRANSACTION = 150
 NUM_SEEDS = 5
 NUM_TRANSACTIONS = 100
-
-
-def check_database_state(
-    deps: Dependencies,
-    tick: int,  # noqa: ARG001
-) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
-    conn: Connection = deps.get("conn")
-    return conn.execute(
-        "SELECT account_id, balance FROM accounts ORDER BY account_id"
-    ).fetchall(), conn.execute(
-        "SELECT account_id, SUM(amount) FROM transfers GROUP BY account_id"
-    ).fetchall()
 
 
 def check_invariants(
@@ -249,7 +235,6 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
         mode="concurrent",
         failure_chance=0.15,
         max_failures=1_000,
-        probe=check_database_state,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(

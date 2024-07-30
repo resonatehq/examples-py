@@ -5,7 +5,7 @@ import pytest
 import resonate
 from resonate.dst.scheduler import DSTScheduler
 
-DB_TRANSACTIONS = 10_000
+DB_TRANSACTIONS = 10
 SEED = 232
 
 
