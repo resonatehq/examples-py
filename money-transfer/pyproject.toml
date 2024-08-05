@@ -6,7 +6,7 @@ authors = [
     { name = "Resonate HQ, Inc", email = "contact@resonatehq.io" }
 ]
 dependencies = [
-    "resonate-sdk >= 0.1.12",
+    "resonate-sdk >= 0.1.16",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"

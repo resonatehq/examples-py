@@ -9,7 +9,9 @@ from money_transfer import errors
 
 if TYPE_CHECKING:
     import sqlite3
+    from sqlite3 import Connection
 
+    from resonate.dependency_injection import Dependencies
     from resonate.dst.scheduler import DSTScheduler
     from resonate.promise import Promise
 
@@ -17,26 +19,22 @@ if TYPE_CHECKING:
 ACCOUNTS = range(1, 4)
 INITIAL_BALANCE = 100
 MAX_TRANSACTION = 150
-NUM_SEEDS = 5
+NUM_SEEDS = 5 * 10
 NUM_TRANSACTIONS = 100
 
 
-def check_invariants(
-    conn: sqlite3.Connection,
-    seed: int,
-    promises: list[Promise[Any]],
-    *,
-    with_transfers: bool,
-) -> None:
-    assert all(p.done() for p in promises)
-
+def check_no_account_in_negative(deps: Dependencies, seed: int, tick: int) -> None:
+    conn: Connection = deps.get("conn")
     accounts_in_negative: int = conn.execute(
         "SELECT COUNT(*) FROM accounts WHERE balance < 0",
     ).fetchone()[0]
     assert (
         accounts_in_negative == 0
-    ), f"Seed {seed} causes a accounts to get in the negatives"
+    ), f"Seed {seed} on tick {tick} causes a accounts to get in the negatives"
 
+
+def check_no_money_destroyed(deps: Dependencies, seed: int) -> None:
+    conn: Connection = deps.get("conn")
     total_money_in_system: int = conn.execute(
         "SELECT SUM(balance) FROM accounts",
     ).fetchone()[0]
@@ -44,6 +42,13 @@ def check_invariants(
     assert (
         total_money_in_system == len(ACCOUNTS) * INITIAL_BALANCE
     ), f"Seed {seed} created or destroyed money in the system"
+
+
+def check_responses_with_state(
+    conn: sqlite3.Connection,
+    promises: list[Promise[Any]],
+) -> None:
+    assert all(p.done() for p in promises)
 
     mock_tables = {i: INITIAL_BALANCE for i in ACCOUNTS}
     for p in promises:
@@ -70,15 +75,14 @@ def check_invariants(
             account[-1] == mock_tables[account[0]]
         ), f"Balance is SQL table is different compared to mock table for account {account[0]}"  # noqa: E501
 
-    if with_transfers:
-        assert conn.execute("SELECT SUM(amount) FROM transfers").fetchone()[0] == 0
-
 
 @pytest.mark.parametrize(
     "scheduler",
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="sequential",
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
     ),
 )
 def test_sequential_execution_and_no_failure(
@@ -103,11 +107,10 @@ def test_sequential_execution_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(
-        conn,
-        scheduler.seed,
-        scheduler.run(),
-        with_transfers=False,
+    promises = scheduler.run()
+    check_responses_with_state(
+        conn=conn,
+        promises=promises,
     )
 
 
@@ -116,6 +119,8 @@ def test_sequential_execution_and_no_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
     ),
 )
 def test_concurrent_execution_and_no_failure(
@@ -140,11 +145,11 @@ def test_concurrent_execution_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(
-        conn,
-        scheduler.seed,
-        scheduler.run(),
-        with_transfers=False,
+    promises = scheduler.run()
+
+    check_responses_with_state(
+        conn=conn,
+        promises=promises,
     )
 
 
@@ -153,6 +158,8 @@ def test_concurrent_execution_and_no_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_no_failure(
@@ -179,11 +186,10 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(
-        conn,
-        scheduler.seed,
-        scheduler.run(),
-        with_transfers=False,
+    promises = scheduler.run()
+    check_responses_with_state(
+        conn=conn,
+        promises=promises,
     )
 
 
@@ -194,6 +200,8 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
         mode="concurrent",
         failure_chance=0.6,
         max_failures=1_000,
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_with_failure(
@@ -220,11 +228,10 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
 
-    check_invariants(
-        conn,
-        scheduler.seed,
-        scheduler.run(),
-        with_transfers=False,
+    promises = scheduler.run()
+    check_responses_with_state(
+        conn=conn,
+        promises=promises,
     )
 
 
@@ -235,6 +242,8 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
         mode="concurrent",
         failure_chance=0.15,
         max_failures=1_000,
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
     ),
 )
 def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
@@ -262,9 +271,9 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
             target=scheduler.random.choice(ACCOUNTS),
             amount=scheduler.random.randint(0, MAX_TRANSACTION),
         )
-    check_invariants(
-        conn,
-        scheduler.seed,
-        scheduler.run(),
-        with_transfers=True,
+
+    promises = scheduler.run()
+    check_responses_with_state(
+        conn=conn,
+        promises=promises,
     )

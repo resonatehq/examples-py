@@ -12,7 +12,7 @@ exceptiongroup==1.2.2
     # via pytest
 iniconfig==2.0.0
     # via pytest
-mypy==1.11.0
+mypy==1.11.1
 mypy-extensions==1.0.0
     # via mypy
 packaging==24.1
@@ -20,7 +20,7 @@ packaging==24.1
 pluggy==1.5.0
     # via pytest
 pytest==8.3.2
-resonate-sdk==0.1.12
+resonate-sdk==0.1.16
     # via money-transfer
 tomli==2.0.1
     # via mypy
