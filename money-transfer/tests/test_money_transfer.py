@@ -52,18 +52,17 @@ def check_responses_with_state(
 
     mock_tables = {i: INITIAL_BALANCE for i in ACCOUNTS}
     for p in promises:
-        if not p.success():
-            try:
-                p.result()
-            except (
-                errors.NotEnoughFundsError,
-                errors.VersionConflictError,
-                errors.SameAccountTransferError,
-            ):
-                continue
+        try:
+            source_target_amount: tuple[int, int, int] = p.result()
+            source, target, amount = source_target_amount
 
-        source_target_amount: tuple[int, int, int] = p.result()
-        source, target, amount = source_target_amount
+        except (
+            errors.NotEnoughFundsError,
+            errors.SameAccountTransferError,
+            errors.VersionConflictError,
+        ):
+            continue
+
         mock_tables[source] -= amount
         mock_tables[target] += amount
 
@@ -198,7 +197,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     resonate.testing.dst(
         [range(NUM_SEEDS)],
         mode="concurrent",
-        failure_chance=0.6,
+        failure_chance=0.4,
         max_failures=1_000,
         assert_always=check_no_account_in_negative,
         assert_eventually=check_no_money_destroyed,

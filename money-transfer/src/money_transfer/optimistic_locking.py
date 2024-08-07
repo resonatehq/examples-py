@@ -42,7 +42,9 @@ def update_balance_ensure_version(
         )
         if cur.rowcount == 0:
             raise errors.VersionConflictError
-    ctx.assert_statement(cur.rowcount == 1, msg="More that one row was affected")
+        ctx.assert_statement(
+            cur.rowcount == 1, msg="Only one row should have been affected."
+        )
 
 
 def update_balance(ctx: Context, account_id: int, amount: int) -> None:
@@ -59,7 +61,9 @@ def update_balance(ctx: Context, account_id: int, amount: int) -> None:
             (amount, account_id),
         )
 
-    ctx.assert_statement(cur.rowcount == 1, msg="More that one row was affected")
+        ctx.assert_statement(
+            cur.rowcount == 1, msg="Only one row should have been affected."
+        )
 
 
 def transaction(
@@ -75,7 +79,6 @@ def transaction(
         current_balance,
         account_id=source,
     )
-
     if source_balance_and_version[0] - amount < 0:
         raise errors.NotEnoughFundsError(account_id=source)
 
