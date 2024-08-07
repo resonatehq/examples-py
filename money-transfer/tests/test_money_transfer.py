@@ -44,7 +44,7 @@ def check_no_money_destroyed(deps: Dependencies, seed: int) -> None:
     ), f"Seed {seed} created or destroyed money in the system"
 
 
-def check_responses_with_state(
+def check_db_state_from_responses(
     conn: sqlite3.Connection,
     promises: list[Promise[Any]],
 ) -> None:
@@ -107,7 +107,7 @@ def test_sequential_execution_and_no_failure(
         )
 
     promises = scheduler.run()
-    check_responses_with_state(
+    check_db_state_from_responses(
         conn=conn,
         promises=promises,
     )
@@ -146,7 +146,7 @@ def test_concurrent_execution_and_no_failure(
 
     promises = scheduler.run()
 
-    check_responses_with_state(
+    check_db_state_from_responses(
         conn=conn,
         promises=promises,
     )
@@ -186,7 +186,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
         )
 
     promises = scheduler.run()
-    check_responses_with_state(
+    check_db_state_from_responses(
         conn=conn,
         promises=promises,
     )
@@ -228,7 +228,7 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
         )
 
     promises = scheduler.run()
-    check_responses_with_state(
+    check_db_state_from_responses(
         conn=conn,
         promises=promises,
     )
@@ -272,7 +272,7 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
         )
 
     promises = scheduler.run()
-    check_responses_with_state(
+    check_db_state_from_responses(
         conn=conn,
         promises=promises,
     )
