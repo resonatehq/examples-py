@@ -1,29 +1,106 @@
 import json
-from collections.abc import Generator, Mapping
-from typing import Any, Literal
+from collections.abc import Generator, Mapping  # noqa: F401
+from typing import Any, Literal, TypeAlias
 
 import ollama
+from duckduckgo_search import DDGS
 from resonate.context import Context
 from resonate.typing import Yieldable
+from typing_extensions import assert_never
+
+from . import testing
+
+__all__ = ["testing"]
+Model: TypeAlias = Literal["llama3.1"]
+RouteOutput: TypeAlias = Literal["web_search", "generate"]
 
 
-def _generate(
-    ctx: Context, model: Literal["llama3.1"], prompt: str, seed: int | None
-) -> Mapping[str, Any]:
-    options: ollama.Options | None = None
-    if seed is not None:
-        options = ollama.Options(seed=seed)
+def query_duckduckgo(
+    ctx: Context,
+    query: str,
+    max_results: int,
+) -> list[dict[str, str]]:
+    c = DDGS()
+    ctx.assert_statement(max_results > 0, "Max results must be postive.")
+    return c.text(keywords=query, max_results=max_results)
 
-    return ollama.generate(model=model, prompt=prompt, options=options)
+
+def format_results(results: list[dict[str, str]]) -> str:
+    return "\n".join(r["body"] for r in results)
 
 
-def generate_a_joke(
-    ctx: Context, seed: int | None = None
-) -> Generator[Yieldable, Any, dict[str, Any]]:
-    response = yield ctx.call(
-        _generate,
-        model="llama3.1",
-        prompt='Please adhere to the following guidelines for all future responses: 1) You are a machine that only returns and replies with valid, iterable RFC8259 compliant JSON in your responses. 2) Do not include warnings, reminders, or explanations in your responses. 3) If no context for a question is provided, guess or assume the context of the topic based on the keywords provided. Do not respond saying that you need more context or information. 4) Your purpose is to generate business context details for technical column names that are being provided as keywords. 5) The response should be the Normalized (Human Readable / non-camel case) Name of the provided keyword..  --- The response must be returned in the following JSON format. [{"keyword": "The original keyword value", "context_response": " the Normalized (Human Readable / non-camel case) Name of the provided keyword"}, {"keyword": "The original keyword value", "context_response": " the Normalized (Human Readable / non-camel case) Name of the provided keyword"}] --- Provide appropriate values for each of the following keywords (in the following semicolon separated list) as best as possible. --- ApplicationStatusName; BankRoutingAccountNumber; BankAccountNumber; BankRoutingNumber; LandlordRegistrationBusinessPhoneNumberKey; TenantApplicationFutureRentAmount; LandlordToTenantApplicationReferenceNumberBankKey; TenantApplicationTypeNameKey; LandlordToTenantApplicationReferenceNumberEmailAddressKey; TenantApplicationReferenceNumberPhoneKey; LandlordRegistrationPrimaryContactEmailAddressKey; LandlordRegistrationReferenceNumberEmailAddressCount; TenantApplicationNameKey; RecordEffectiveEndTimestamp; TenantApplicationFutureUtilityAssistanceAmount; LandlordRegistrationReferenceNumberFullAddressKey; LandlordRegistrationReferenceNumberBankKey; TenantKey; TenantApplicationStatusKey; TenantApplicationPastDueUtilityAmount; LandlordRegistrationAddressKey; LandlordRegistrationPrimaryContactMobilePhoneNumberKey; TenantToLandlordApplicationReferenceNumberEmailAddressCount; LandlordRegistrationPrimaryContactAddressKey; LandlordRegistrationReferenceNumberPhoneKey',
-        seed=seed,
+def reply_query_based_on_info(
+    ctx: Context, model: Model, info: str | None, query: str  # noqa: ARG001
+) -> str:
+    if info is None:
+        info = ""
+    resp = ollama.chat(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": """You are an AI assistant for Research Question Tasks, that synthesizes web search results.
+    Strictly use the following pieces of web search context to answer the question. If you don't know the answer, just say that you don't know.
+    keep the answer concise, but provide all of the details you can in the form of a research report.
+    Only make direct references to material if provided in the context.""",  # noqa: E501
+            },
+            {
+                "role": "user",
+                "content": f"""Question: {query}
+    Web Search Context {info}
+    Answer:""",
+            },
+        ],
+        options=ollama.Options(seed=1),
     )
-    return json.loads(response["response"])
+    return resp["message"]["content"]
+
+
+def check_if_websearch_is_required(ctx: Context, model: Model, query: str) -> bool:  # noqa: ARG001
+    resp = ollama.chat(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": """You are an expert at routing a user question to either the generation stage or web search.
+    Use the web search for questions that require more context for a better answer, or recent events.
+    Otherwise, you can skip and go straight to the generation phase to respond.
+    You do not need to be stringent with the keywords in the question related to these topics.
+    Give a binary choice 'web_search' or 'generate' based on the question.
+    Return the JSON with a single key 'choice' with no premable or explanation. """,  # noqa: E501
+            },
+            {"role": "user", "content": f"Question to route: {query} "},
+        ],
+        options=ollama.Options(seed=1),
+    )
+    choice: RouteOutput = json.loads(resp["message"]["content"])["choice"]
+    need_websearch: bool
+    if choice == "generate":
+        need_websearch = False
+    elif choice == "web_search":
+        need_websearch = True
+    else:
+        assert_never(choice)
+
+    return need_websearch
+
+
+def use_case(ctx: Context, query: str) -> Generator[Yieldable, Any, str | None]:
+    model_to_use: Model = "llama3.1"
+    websearch_info: str | None = None
+    if (
+        yield ctx.call(check_if_websearch_is_required, model=model_to_use, query=query)
+    ):
+        results: list[dict[str, str]] = yield ctx.call(
+            query_duckduckgo, query=query, max_results=25
+        )
+        websearch_info = format_results(results)
+
+    return (
+        yield ctx.call(
+            reply_query_based_on_info,
+            model=model_to_use,
+            query=query,
+            info=websearch_info,
+        )
+    )

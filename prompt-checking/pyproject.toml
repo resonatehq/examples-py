@@ -7,7 +7,9 @@ authors = [
 ]
 dependencies = [
     "resonate-sdk>=0.1.20",
-    "ollama>=0.3.1",
+    "ollama",
+    "click",
+    "duckduckgo-search>=6.2.6",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -15,6 +17,9 @@ requires-python = ">= 3.10"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.scripts]
+"ai-demo" = "prompt_checking.cli:cli"
 
 [tool.rye.scripts]
 check-types = "dmypy run --timeout 60 -- src tests"
@@ -24,6 +29,7 @@ managed = true
 dev-dependencies = [
     "pytest>=8.3.2",
     "mypy>=1.11.1",
+    "duckduckgo-search>=6.2.6",
 ]
 
 [tool.hatch.metadata]

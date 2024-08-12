@@ -15,6 +15,11 @@ anyio==4.4.0
 certifi==2024.7.4
     # via httpcore
     # via httpx
+click==8.1.7
+    # via duckduckgo-search
+    # via prompt-checking
+duckduckgo-search==6.2.6
+    # via prompt-checking
 exceptiongroup==1.2.2
     # via anyio
 h11==0.14.0
@@ -28,6 +33,8 @@ idna==3.7
     # via httpx
 ollama==0.3.1
     # via prompt-checking
+primp==0.5.5
+    # via duckduckgo-search
 resonate-sdk==0.1.20
     # via prompt-checking
 sniffio==1.3.1
