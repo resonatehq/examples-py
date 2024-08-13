@@ -27,3 +27,24 @@ pip install -r requirements-dev.lock
 ```zsh
 pytest
 ```
+
+### CLI
+```zsh
+rye run ai-demo search "lastest news olympic games winner"
+```
+
+### API
+1. Server up
+```zsh
+rye run ai-demo up
+```
+2. curl
+```zsh
+curl -X 'POST' \
+  'http://127.0.0.1:8000/search' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "query": "lastest news olympic games winner"
+}'
+```

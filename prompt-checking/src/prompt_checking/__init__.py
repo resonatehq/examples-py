@@ -30,8 +30,11 @@ def format_results(results: list[dict[str, str]]) -> str:
 
 
 def reply_query_based_on_info(
-    ctx: Context, model: Model, info: str | None, query: str  # noqa: ARG001
+    ctx: Context,
+    info: str | None,
+    query: str,
 ) -> str:
+    model: Model = ctx.deps.get("model")
     if info is None:
         info = ""
     resp = ollama.chat(
@@ -56,7 +59,8 @@ def reply_query_based_on_info(
     return resp["message"]["content"]
 
 
-def check_if_websearch_is_required(ctx: Context, model: Model, query: str) -> bool:  # noqa: ARG001
+def check_if_websearch_is_required(ctx: Context, query: str) -> bool:
+    model: Model = ctx.deps.get("model")
     resp = ollama.chat(
         model=model,
         messages=[
@@ -86,11 +90,8 @@ def check_if_websearch_is_required(ctx: Context, model: Model, query: str) -> bo
 
 
 def use_case(ctx: Context, query: str) -> Generator[Yieldable, Any, str | None]:
-    model_to_use: Model = "llama3.1"
     websearch_info: str | None = None
-    if (
-        yield ctx.call(check_if_websearch_is_required, model=model_to_use, query=query)
-    ):
+    if (yield ctx.call(check_if_websearch_is_required, query=query)):
         results: list[dict[str, str]] = yield ctx.call(
             query_duckduckgo, query=query, max_results=25
         )
@@ -99,7 +100,6 @@ def use_case(ctx: Context, query: str) -> Generator[Yieldable, Any, str | None]:
     return (
         yield ctx.call(
             reply_query_based_on_info,
-            model=model_to_use,
             query=query,
             info=websearch_info,
         )

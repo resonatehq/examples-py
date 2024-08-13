@@ -9,6 +9,7 @@ def test_prompt() -> None:
             prompt_checking.query_duckduckgo: prompt_checking.testing.mocks.query_duckduckgo,  # noqa: E501
         },
     )[0]
+    s.deps.set("model", "llama3.1")
     s.add(prompt_checking.use_case, query="home depot news")
     assert (
         s.run()[0].result()
