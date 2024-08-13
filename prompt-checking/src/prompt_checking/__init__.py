@@ -1,14 +1,16 @@
 import json
 from collections.abc import Generator, Mapping  # noqa: F401
-from typing import Any, Literal, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
 import ollama
-from duckduckgo_search import DDGS
 from resonate.context import Context
 from resonate.typing import Yieldable
 from typing_extensions import assert_never
 
 from . import testing
+
+if TYPE_CHECKING:
+    from duckduckgo_search import DDGS
 
 __all__ = ["testing"]
 Model: TypeAlias = Literal["llama3.1"]
@@ -20,8 +22,8 @@ def query_duckduckgo(
     query: str,
     max_results: int,
 ) -> list[dict[str, str]]:
-    c = DDGS()
     ctx.assert_statement(max_results > 0, "Max results must be postive.")
+    c: DDGS = ctx.deps.get("duckduckgo_client")
     return c.text(keywords=query, max_results=max_results)
 
 
