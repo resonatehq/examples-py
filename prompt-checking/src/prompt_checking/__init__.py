@@ -35,6 +35,7 @@ def reply_query_based_on_info(
     query: str,
 ) -> str:
     model: Model = ctx.deps.get("model")
+    assert ctx.seed is not None
     if info is None:
         info = ""
     resp = ollama.chat(
@@ -54,13 +55,14 @@ def reply_query_based_on_info(
     Answer:""",
             },
         ],
-        options=ollama.Options(seed=1),
+        options=ollama.Options(seed=ctx.seed),
     )
     return resp["message"]["content"]
 
 
 def check_if_websearch_is_required(ctx: Context, query: str) -> bool:
     model: Model = ctx.deps.get("model")
+    assert ctx.seed is not None
     resp = ollama.chat(
         model=model,
         messages=[
@@ -75,7 +77,7 @@ def check_if_websearch_is_required(ctx: Context, query: str) -> bool:
             },
             {"role": "user", "content": f"Question to route: {query} "},
         ],
-        options=ollama.Options(seed=1),
+        options=ollama.Options(seed=ctx.seed),
     )
     choice: RouteOutput = json.loads(resp["message"]["content"])["choice"]
     need_websearch: bool

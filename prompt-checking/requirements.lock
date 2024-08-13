@@ -74,7 +74,7 @@ python-multipart==0.0.9
     # via fastapi
 pyyaml==6.0.2
     # via uvicorn
-resonate-sdk==0.1.20
+resonate-sdk==0.1.21
     # via prompt-checking
 rich==13.7.1
     # via typer
