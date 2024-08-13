@@ -1,0 +1,80 @@
+[project]
+name = "prompt-checking"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Resonate HQ, Inc", email = "contact@resonatehq.io" }
+]
+dependencies = [
+    "resonate-sdk>=0.1.20",
+    "ollama",
+    "click",
+    "duckduckgo-search>=6.2.6",
+    "fastapi[standard]>=0.112.0",
+]
+readme = "README.md"
+requires-python = ">= 3.10"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+"ai-demo" = "prompt_checking.cli:cli"
+
+[tool.rye.scripts]
+check-types = "dmypy run --timeout 60 -- src tests"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pytest>=8.3.2",
+    "mypy>=1.11.1",
+    "duckduckgo-search>=6.2.6",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prompt_checking"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+xfail_strict = true
+addopts = [
+    "--import-mode=importlib"
+]
+
+[tool.ruff]
+unsafe-fixes = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",
+    "ANN101",
+    "COM812",
+    "ISC001",
+    "S101"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["INP001", "S101", "D"]
+
+[tool.mypy]
+mypy_path = "src"
+plugins = []
+follow_imports = "normal"
+strict_optional = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+check_untyped_defs = true
+warn_unused_configs = true
+disallow_subclassing_any = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+explicit_package_bases = true
