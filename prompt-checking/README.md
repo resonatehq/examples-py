@@ -7,8 +7,8 @@ The use case flow looks like this:
 ```mermaid
 flowchart LR
 
-A[API] -->|Prompt| D{Is a web search required?}
-B[CLI] -->|Prompt| D{Is a web search required?}
+A[API] -->|Prompt| D{web search required?}
+B[CLI] -->|Prompt| D{web search required?}
 D -->|Yes| E[Search the web]
 D -->|No| F[Create a response]
 E -->F[Create a response]
