@@ -7,9 +7,9 @@ The use case flow looks like this:
 ```mermaid
 flowchart LR
 
-A[API] -->|Prompt| D{Is recent data required?}
-B[CLI] -->|Prompt| D{Is recent data required?}
-D -->|Yes| E[Scrap the web browser]
+A[API] -->|Prompt| D{Is a web search required?}
+B[CLI] -->|Prompt| D{Is a web search required?}
+D -->|Yes| E[Search the web]
 D -->|No| F[Create a response]
 E -->F[Create a response]
 ```
@@ -85,6 +85,13 @@ def test_deterministic_prompt_generation(scheduler: DSTScheduler) -> None:
 ```
 ## How to run
 
+### Install ollama
+1. [Follow instruction to download the binary](https://ollama.com/download)
+2. Install `llama3.1` model
+```zsh
+ollama run llama3.1
+```
+
 ### Using [rye](https://rye.astral.sh) (Recommended)
 
 1. Setup project's virtual environment and install dependencies
@@ -92,7 +99,7 @@ def test_deterministic_prompt_generation(scheduler: DSTScheduler) -> None:
 rye sync
 ```
 
-2. Run tests
+1. Run tests
 ```zsh
 rye test
 ```
