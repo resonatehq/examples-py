@@ -48,14 +48,16 @@ In this application, our invariant is: **Never return an unreasonable response**
         },
     ),
 )
-def test_not_reasonable_responses(scheduler: DSTScheduler) -> None:
+def test_reasonable_responses(scheduler: DSTScheduler) -> None:
     scheduler.deps.set("model", "llama3.1")
     scheduler.deps.set("duckduckgo_client", DDGS())
-    input_prompt = "teleperformance news"
+    input_prompt = "home depot news"
     scheduler.add(prompt_checking.use_case, query=input_prompt)
     response: str = scheduler.run()[0].result()
     _assert_is_a_reasonable_response(
-        input_prompt=input_prompt, response=response, model=scheduler.deps.get("model")
+        input_prompt=input_prompt,
+        response=response,
+        model=scheduler.deps.get("model"),
     )
 ```
 

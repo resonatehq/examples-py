@@ -34,7 +34,7 @@ def _assert_is_a_reasonable_response(
     response: str,
     model: prompt_checking.Model,
     *,
-    negation: bool = True,
+    negation: bool = False,
 ) -> None:
     resp = ollama.chat(
         model=model,
@@ -81,7 +81,10 @@ def test_not_reasonable_responses(scheduler: DSTScheduler) -> None:
     scheduler.add(prompt_checking.use_case, query=input_prompt)
     response: str = scheduler.run()[0].result()
     _assert_is_a_reasonable_response(
-        input_prompt=input_prompt, response=response, model=scheduler.deps.get("model")
+        input_prompt=input_prompt,
+        response=response,
+        model=scheduler.deps.get("model"),
+        negation=True,
     )
 
 
@@ -104,5 +107,4 @@ def test_reasonable_responses(scheduler: DSTScheduler) -> None:
         input_prompt=input_prompt,
         response=response,
         model=scheduler.deps.get("model"),
-        negation=True,
     )
