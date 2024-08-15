@@ -23,7 +23,7 @@ def use_case(ctx: Context, query: str) -> Generator[Yieldable, Any, str | None]:
         results: list[dict[str, str]] = yield ctx.call(
             query_duckduckgo, query=query, max_results=25
         )
-        websearch_info = format_results(results)
+        websearch_info = _format_results(results)
 
     return (
         yield ctx.call(
