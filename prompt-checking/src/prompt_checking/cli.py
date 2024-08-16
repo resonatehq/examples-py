@@ -1,8 +1,8 @@
 import subprocess
 
 import click
-import resonate
 from duckduckgo_search import DDGS
+from resonate.scheduler import Scheduler
 
 import prompt_checking
 
@@ -28,12 +28,11 @@ def cli() -> None:
 @cli.command()
 @click.argument("query")
 def search(query: str) -> None:
-    s = resonate.testing.dst(seeds=[1])[0]
-    s.deps.set("model", "llama3.1")
-    s.deps.set("duckduckgo_client", DDGS())
-    s.add(prompt_checking.use_case, query=query)
-    result = s.run()[0].result()
-    click.echo(result)
+    s = Scheduler()
+    s._deps.set("model", "llama3.1")
+    s._deps.set("duckduckgo_client", DDGS())
+    p = s.run("search", prompt_checking.use_case, query=query)
+    click.echo(p.result())
 
 
 @cli.command()
