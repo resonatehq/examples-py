@@ -6,10 +6,18 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
+#   universal: false
 
 -e file:.
+certifi==2024.7.4
+    # via requests
+charset-normalizer==3.3.2
+    # via requests
 exceptiongroup==1.2.2
     # via pytest
+idna==3.8
+    # via requests
 iniconfig==2.0.0
     # via pytest
 mypy==1.11.1
@@ -20,7 +28,9 @@ packaging==24.1
 pluggy==1.5.0
     # via pytest
 pytest==8.3.2
-resonate-sdk==0.1.20
+requests==2.32.3
+    # via resonate-sdk
+resonate-sdk==0.1.23
     # via money-transfer
 tomli==2.0.1
     # via mypy
@@ -28,3 +38,5 @@ tomli==2.0.1
 typing-extensions==4.12.2
     # via mypy
     # via resonate-sdk
+urllib3==2.2.2
+    # via requests

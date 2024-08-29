@@ -6,9 +6,21 @@
 #   features: []
 #   all-features: false
 #   with-sources: false
+#   generate-hashes: false
+#   universal: false
 
 -e file:.
-resonate-sdk==0.1.12
+certifi==2024.7.4
+    # via requests
+charset-normalizer==3.3.2
+    # via requests
+idna==3.8
+    # via requests
+requests==2.32.3
+    # via resonate-sdk
+resonate-sdk==0.1.23
     # via batching
 typing-extensions==4.12.2
     # via resonate-sdk
+urllib3==2.2.2
+    # via requests

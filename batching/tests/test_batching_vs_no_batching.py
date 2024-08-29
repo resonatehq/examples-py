@@ -20,7 +20,7 @@ def test_no_batching(scheduler: DSTScheduler, setup_and_teardown: Connection) ->
 
     scheduler.deps.set("conn", conn)
     for i in range(DB_TRANSACTIONS):
-        scheduler.add(batching.insert_value_by_value, value=i)
+        scheduler.add("insert-value-by-value", batching.insert_value_by_value, value=i)
 
     promises = scheduler.run()
     assert all(p.success() for p in promises)
@@ -42,7 +42,11 @@ def test_batching(scheduler: DSTScheduler, setup_and_teardown: Connection) -> No
         max_batch=DB_TRANSACTIONS,
     )
     for i in range(DB_TRANSACTIONS):
-        scheduler.add(batching.insert_values_using_batch, value=i)
+        scheduler.add(
+            "insert-multiple-values-using-batch",
+            batching.insert_values_using_batch,
+            value=i,
+        )
 
     promises = scheduler.run()
     assert all(p.success() for p in promises)

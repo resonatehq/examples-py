@@ -98,8 +98,9 @@ def test_sequential_execution_and_no_failure(
             conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, INITIAL_BALANCE))
 
     scheduler.deps.set("conn", conn)
-    for _ in range(NUM_TRANSACTIONS):
+    for i in range(NUM_TRANSACTIONS):
         scheduler.add(
+            f"transaction-{i}",
             money_transfer.basic.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -136,8 +137,9 @@ def test_concurrent_execution_and_no_failure(
             conn.execute("INSERT INTO accounts VALUES (?, ?)", (i, INITIAL_BALANCE))
 
     scheduler.deps.set("conn", conn)
-    for _ in range(NUM_TRANSACTIONS):
+    for i in range(NUM_TRANSACTIONS):
         scheduler.add(
+            f"transaction-{i}",
             money_transfer.basic.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -177,8 +179,9 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
             )
 
     scheduler.deps.set("conn", conn)
-    for _ in range(NUM_TRANSACTIONS):
+    for i in range(NUM_TRANSACTIONS):
         scheduler.add(
+            f"transaction-{i}",
             money_transfer.optimistic_locking.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -219,8 +222,9 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
             )
 
     scheduler.deps.set("conn", conn)
-    for _ in range(NUM_TRANSACTIONS):
+    for i in range(NUM_TRANSACTIONS):
         scheduler.add(
+            f"transaction-{i}",
             money_transfer.optimistic_locking.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -264,6 +268,7 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
     scheduler.deps.set("conn", conn)
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
+            f"transaction-{i}",
             money_transfer.optimistic_locking_and_rollback.transaction,
             transfer_id=i,
             source=scheduler.random.choice(ACCOUNTS),

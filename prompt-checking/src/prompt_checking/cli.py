@@ -1,10 +1,13 @@
 import subprocess
+from typing import TYPE_CHECKING
 
 import click
-from duckduckgo_search import DDGS
-from resonate.scheduler import Scheduler
 
 import prompt_checking
+from prompt_checking.config import configured_scheduler
+
+if TYPE_CHECKING:
+    from resonate.promise import Promise
 
 
 @click.group(
@@ -28,10 +31,8 @@ def cli() -> None:
 @cli.command()
 @click.argument("query")
 def search(query: str) -> None:
-    s = Scheduler()
-    s._deps.set("model", "llama3.1")
-    s._deps.set("duckduckgo_client", DDGS())
-    p = s.run("search", prompt_checking.use_case, query=query)
+    s = configured_scheduler()
+    p: Promise[str] = s.run("search", prompt_checking.use_case, query=query)
     click.echo(p.result())
 
 
