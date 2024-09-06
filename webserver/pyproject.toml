@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "fastapi[standard]>=0.113.0",
-    "resonate-sdk>=0.1.25",
+    "resonate-sdk>=0.1.28",
 ]
 requires-python = ">= 3.11"
 
