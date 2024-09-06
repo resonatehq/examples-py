@@ -1,4 +1,5 @@
 from functools import cache
+import time
 from typing import Generator
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -25,8 +26,10 @@ def _scheduler() -> Scheduler:
 
 
 def factorial(ctx: Context, n: int) -> Generator[Yieldable, int, int]:
+    print(f"calculating factorial for {n}")
     if n == 0 or n == 1:
         return 1
+    time.sleep(3)
     return n * (yield ctx.call(factorial, Options(durable=True), n=n - 1))
 
 
@@ -54,16 +57,11 @@ async def process_number_async(data: InputData):
 
 
 @app.get("/async/get-number/{number}")
-async def get_number_async(number: int):
-    storage = _storage()
-    record = storage.get(promise_id=f"factorial-for-{number}")
-    if record.is_pending():
-        return {"state": record.state}
-    elif record.is_resolved():
-        return {"state": record.state, "original": number, "result": record.value.data}
-    else:
-        assert record.is_rejected()
-        return {"state": record.state, "error": record.value.data}
+async def get_process_number_async(number: int):
+    s = _scheduler()
+    p = s.run(f"factorial-for-{number}", Options(durable=True), factorial, n=number)
+    value = p.result()
+    return {"original": number, "result": value}
 
 
 # Run the application

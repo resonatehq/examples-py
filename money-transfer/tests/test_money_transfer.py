@@ -6,6 +6,7 @@ import money_transfer
 import pytest
 import resonate
 from money_transfer import errors
+from resonate.options import Options
 
 if TYPE_CHECKING:
     import sqlite3
@@ -101,6 +102,7 @@ def test_sequential_execution_and_no_failure(
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
             f"transaction-{i}",
+            Options(durable=True),
             money_transfer.basic.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -140,6 +142,7 @@ def test_concurrent_execution_and_no_failure(
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
             f"transaction-{i}",
+            Options(durable=True),
             money_transfer.basic.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -182,6 +185,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
             f"transaction-{i}",
+            Options(durable=True),
             money_transfer.optimistic_locking.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -225,6 +229,7 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
             f"transaction-{i}",
+            Options(durable=True),
             money_transfer.optimistic_locking.transaction,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
@@ -269,6 +274,7 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
     for i in range(NUM_TRANSACTIONS):
         scheduler.add(
             f"transaction-{i}",
+            Options(durable=True),
             money_transfer.optimistic_locking_and_rollback.transaction,
             transfer_id=i,
             source=scheduler.random.choice(ACCOUNTS),

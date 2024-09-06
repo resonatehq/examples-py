@@ -10,7 +10,7 @@
 #   universal: false
 
 -e file:.
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
 charset-normalizer==3.3.2
     # via requests
@@ -18,7 +18,7 @@ idna==3.8
     # via requests
 requests==2.32.3
     # via resonate-sdk
-resonate-sdk==0.1.23
+resonate-sdk==0.1.27
     # via money-transfer
 typing-extensions==4.12.2
     # via resonate-sdk
