@@ -92,7 +92,7 @@ def test_sequential_execution_and_no_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER)")
 
     with conn:
         for i in ACCOUNTS:
@@ -132,7 +132,7 @@ def test_concurrent_execution_and_no_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER)")
 
     with conn:
         for i in ACCOUNTS:
@@ -173,7 +173,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -217,7 +217,7 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -261,8 +261,8 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE transfers(transfer_id, account_id, amount)")
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE transfers(transfer_id INTEGER, account_id INTEGER, amount INTEGER)") # noqa: E501
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -307,8 +307,8 @@ def test_concurrent_execution_with_idempotent_optimistic_locking_and_with_failur
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE balance_updates(transaction_id)")
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE balance_updates(transaction_id TEXT PRIMARY KEY)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -352,9 +352,9 @@ def test_concurrent_execution_with_idempontent_optimistic_locking_and_optimistic
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE balance_updates(transaction_id)")
-        conn.execute("CREATE TABLE transfers(transfer_id, account_id, amount)")
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE balance_updates(transaction_id TEXT PRIMARY KEY)")
+        conn.execute("CREATE TABLE transfers(transfer_id INTEGER, account_id INTEGER, amount INTEGER)") # noqa: E501
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
