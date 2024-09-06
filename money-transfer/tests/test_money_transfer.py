@@ -92,7 +92,7 @@ def test_sequential_execution_and_no_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER)")
 
     with conn:
         for i in ACCOUNTS:
@@ -132,7 +132,7 @@ def test_concurrent_execution_and_no_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER)")
 
     with conn:
         for i in ACCOUNTS:
@@ -173,7 +173,7 @@ def test_concurrent_execution_with_optimistic_locking_and_no_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -217,7 +217,7 @@ def test_concurrent_execution_with_optimistic_locking_and_with_failure(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -261,8 +261,8 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
     conn = setup_and_teardown
 
     with conn:
-        conn.execute("CREATE TABLE transfers(transfer_id, account_id, amount)")
-        conn.execute("CREATE TABLE accounts(account_id, balance, version)")
+        conn.execute("CREATE TABLE transfers(transfer_id INTEGER, account_id INTEGER, amount INTEGER)") # noqa: E501
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
 
     with conn:
         for i in ACCOUNTS:
@@ -276,6 +276,98 @@ def test_concurrent_execution_with_optimistic_locking_and_optimistic_rollback(
             f"transaction-{i}",
             Options(durable=True),
             money_transfer.optimistic_locking_and_rollback.transaction,
+            transfer_id=i,
+            source=scheduler.random.choice(ACCOUNTS),
+            target=scheduler.random.choice(ACCOUNTS),
+            amount=scheduler.random.randint(0, MAX_TRANSACTION),
+        )
+
+    promises = scheduler.run()
+    check_db_state_from_responses(
+        conn=conn,
+        promises=promises,
+    )
+
+
+@pytest.mark.parametrize(
+    "scheduler",
+    resonate.testing.dst(
+        [range(NUM_SEEDS)],
+        mode="concurrent",
+        failure_chance=0.4,
+        max_failures=1_000,
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
+    ),
+)
+def test_concurrent_execution_with_idempotent_optimistic_locking_and_with_failure(
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
+) -> None:
+    conn = setup_and_teardown
+
+    with conn:
+        conn.execute("CREATE TABLE balance_updates(transaction_id TEXT PRIMARY KEY)")
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
+
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute(
+                "INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0)
+            )
+
+    scheduler.deps.set("conn", conn)
+    for i in range(NUM_TRANSACTIONS):
+        scheduler.add(
+            f"transaction-{i}",
+            Options(durable=True),
+            money_transfer.idempotent_optimistic_locking.transaction,
+            source=scheduler.random.choice(ACCOUNTS),
+            target=scheduler.random.choice(ACCOUNTS),
+            amount=scheduler.random.randint(0, MAX_TRANSACTION),
+        )
+
+    promises = scheduler.run()
+    check_db_state_from_responses(
+        conn=conn,
+        promises=promises,
+    )
+
+
+@pytest.mark.parametrize(
+    "scheduler",
+    resonate.testing.dst(
+        seeds=[range(NUM_SEEDS)],
+        mode="concurrent",
+        failure_chance=0.15,
+        max_failures=1_000,
+        assert_always=check_no_account_in_negative,
+        assert_eventually=check_no_money_destroyed,
+    ),
+)
+def test_concurrent_execution_with_idempontent_optimistic_locking_and_optimistic_rollback(  # noqa: E501
+    scheduler: DSTScheduler,
+    setup_and_teardown: sqlite3.Connection,
+) -> None:
+    conn = setup_and_teardown
+
+    with conn:
+        conn.execute("CREATE TABLE balance_updates(transaction_id TEXT PRIMARY KEY)")
+        conn.execute("CREATE TABLE transfers(transfer_id INTEGER, account_id INTEGER, amount INTEGER)") # noqa: E501
+        conn.execute("CREATE TABLE accounts(account_id INTEGER PRIMARY KEY, balance INTEGER, version INTEGER)") # noqa: E501
+
+    with conn:
+        for i in ACCOUNTS:
+            conn.execute(
+                "INSERT INTO accounts VALUES (?, ?, ?)", (i, INITIAL_BALANCE, 0)
+            )
+
+    scheduler.deps.set("conn", conn)
+    for i in range(NUM_TRANSACTIONS):
+        scheduler.add(
+            f"transaction-{i}",
+            Options(durable=True),
+            money_transfer.idempontent_optimistic_locking_and_rollback.transaction,
             transfer_id=i,
             source=scheduler.random.choice(ACCOUNTS),
             target=scheduler.random.choice(ACCOUNTS),
