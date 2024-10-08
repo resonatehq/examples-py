@@ -1,0 +1,30 @@
+[project]
+name = "flask-webserver"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Tomperez98", email = "tomasperezalvarez@gmail.com" }
+]
+dependencies = [
+    "flask>=3.0.3",
+    "resonate-sdk>=0.1.32",
+]
+readme = "README.md"
+requires-python = ">= 3.9"
+
+[project.scripts]
+"flask-webserver" = "flask_webserver:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flask_webserver"]
