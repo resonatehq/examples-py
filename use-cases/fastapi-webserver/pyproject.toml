@@ -1,0 +1,30 @@
+[project]
+name = "fastapi-webserver"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Tomperez98", email = "tomasperezalvarez@gmail.com" }
+]
+dependencies = [
+    "resonate-sdk>=0.1.32",
+    "fastapi[standard]>=0.115.0",
+]
+readme = "README.md"
+requires-python = ">= 3.9"
+
+[project.scripts]
+"fastapi-webserver" = "fastapi_webserver:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastapi_webserver"]
