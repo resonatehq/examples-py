@@ -4,7 +4,6 @@ from resonate.context import Context
 from resonate.scheduler import Scheduler
 from resonate.storage import LocalPromiseStore
 from resonate.typing import Yieldable
-from resonate import retry_policy
 
 resonate = Scheduler(LocalPromiseStore())
 
@@ -18,11 +17,11 @@ def fib(ctx: Context, n: int) -> Generator[Yieldable, int, int]:
     )
 
 
-resonate.register(fib, retry_policy=retry_policy.never())
+resonate.register(fib)
 
 
 @click.command()
-@click.option("--number", prompt="Number", type=click.IntRange(0))
+@click.option("--number", prompt="F(N) when N equals?", type=click.IntRange(0))
 def cli(number: int):
     value = resonate.run(f"fib-{number}", fib, number).result()
     click.echo(f"F({number}) = {value}")
