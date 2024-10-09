@@ -4,6 +4,7 @@ from resonate.context import Context
 from resonate.storage import LocalPromiseStore
 
 app = Flask(__name__)
+resonate = Scheduler(LocalPromiseStore())
 
 
 def baz(ctx: Context):
@@ -22,7 +23,6 @@ def foo(ctx: Context):
 
 @app.route("/")
 def read_root():
-    resonate = Scheduler(LocalPromiseStore())
     resonate.register(foo)
     v = resonate.run("foo", foo).result()
     return jsonify({"value": v})

@@ -4,6 +4,9 @@ from resonate.context import Context
 from resonate.storage import LocalPromiseStore
 
 
+resonate = Scheduler(LocalPromiseStore())
+
+
 def baz(ctx: Context):
     return 1
 
@@ -19,7 +22,6 @@ def foo(ctx: Context):
 
 
 def read_root(request):
-    resonate = Scheduler(LocalPromiseStore())
     resonate.register(foo)
     v = resonate.run("foo", foo).result()
     return JsonResponse({"value": v})

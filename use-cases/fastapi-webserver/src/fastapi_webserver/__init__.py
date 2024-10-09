@@ -5,6 +5,7 @@ from resonate.context import Context
 from resonate.storage import LocalPromiseStore
 
 app = FastAPI()
+resonate = Scheduler(LocalPromiseStore())
 
 
 def baz(ctx: Context):
@@ -23,7 +24,6 @@ def foo(ctx: Context):
 
 @app.get("/")
 def read_root():
-    resonate = Scheduler(LocalPromiseStore())
     resonate.register(foo)
     v = resonate.run("foo", foo).result()
     return {"value": v}
