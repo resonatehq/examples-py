@@ -22,9 +22,11 @@ def foo(ctx: Context):
     return v + 1
 
 
+resonate.register(foo)
+
+
 @app.get("/")
 def read_root():
-    resonate.register(foo)
     v = resonate.run("foo", foo).result()
     return {"value": v}
 

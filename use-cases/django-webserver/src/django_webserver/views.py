@@ -21,7 +21,9 @@ def foo(ctx: Context):
     return v + 1
 
 
+resonate.register(foo)
+
+
 def read_root(request):
-    resonate.register(foo)
     v = resonate.run("foo", foo).result()
     return JsonResponse({"value": v})
