@@ -1,13 +1,12 @@
-from functools import cache
-
+import time
 from typing import Generator
 from fastapi import FastAPI
 from pydantic import BaseModel
 from resonate.context import Context
-from resonate.options import Options
+from resonate.promise import Promise
 from resonate.typing import Yieldable
 from resonate.scheduler import Scheduler
-from resonate.storage import RemotePromiseStore
+from resonate.storage import LocalPromiseStore
 
 app = FastAPI()
 
@@ -15,59 +14,38 @@ HOST = "localhost"
 PORT = 8000
 
 
-@cache
-def _storage() -> RemotePromiseStore:
-    return RemotePromiseStore("http://localhost:8001")
-
-
-@cache
-def _scheduler() -> Scheduler:
-    return Scheduler(durable_promise_storage=_storage())
-
-
-def factorial(ctx: Context, n: int) -> Generator[Yieldable, int, int]:
-    if n == 0 or n == 1:
-        return 1
-
-    return n * (
-        yield ctx.call(
-            factorial,
-            Options(
-                durable=(n - 1) % 2 == 0,
-                promise_id=f"factorial-for-{n-1}",
-            ),
-            n=n - 1,
-        )
-    )
+resonate = Scheduler(durable_promise_storage=LocalPromiseStore())
 
 
 class InputData(BaseModel):
     number: int
 
 
-@app.post("/sync/process-number")
-async def process_number_sync(data: InputData):
-    s = _scheduler()
-    execution_promise = s.run(
-        f"factorial-for-{data.number}", Options(durable=True), factorial, n=data.number
+def factorial(ctx: Context, n: int) -> Generator[Yieldable, int, int]:
+    time.sleep(0.5)
+    if n == 0 or n == 1:
+        return 1
+
+    return n * (
+        yield ctx.lfc(
+            factorial,
+            n=n - 1,
+        ).with_options(
+            promise_id=f"factorial-for-{n-1}",
+            durable=True,
+        )
     )
-    value = execution_promise.result()
-    return {"original": data.number, "result": value}
 
 
-@app.post("/async/process-number")
-async def process_number_async(data: InputData):
-    s = _scheduler()
-    s.run(
-        f"factorial-for-{data.number}", Options(durable=True), factorial, n=data.number
-    )
-    return {"url-for-response": f"http://{HOST}:{PORT}/async/get-number/{data.number}"}
+resonate.register(factorial)
 
 
 @app.get("/async/get-number/{number}")
 async def get_process_number_async(number: int):
-    s = _scheduler()
-    p = s.run(f"factorial-for-{number}", Options(durable=True), factorial, n=number)
+    p: Promise[int] = resonate.run(f"factorial-for-{number}", factorial, n=number)
+    if not p.done():
+        return {"state": "Working on it", "msg": "Come back in 5 min"}
+
     value = p.result()
     return {"original": number, "result": value}
 
@@ -76,4 +54,4 @@ async def get_process_number_async(number: int):
 def main() -> None:
     import uvicorn
 
-    uvicorn.run(app, host=HOST, port=PORT)
+    uvicorn.run(app)
