@@ -31,7 +31,7 @@ class InsertValue(Command):
     value: int
 
 
-def _batch_handler(cmds: list[InsertValue]):
+def _batch_handler(ctx: Context, cmds: list[InsertValue]):
     first_value = cmds[0].value
     last_value = None
     for cmd in cmds:
