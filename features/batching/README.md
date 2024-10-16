@@ -5,7 +5,7 @@ Resonate transparent batching enables you to take the most out of bulk operation
 ```py
 # With batching
 
-conn = Connection(":memory:", check_same_thread=False)
+conn = Connection("benchmark.db", check_same_thread=False)
 
 resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
 
@@ -49,7 +49,7 @@ rye run batching --batch --values 100_000
 ```py
 # Without batching
 
-conn = Connection(":memory:", check_same_thread=False)
+conn = Connection("benchmark.db", check_same_thread=False)
 
 resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
 
