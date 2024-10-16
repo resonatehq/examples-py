@@ -10,7 +10,7 @@ from resonate.commands import Command
 import time
 
 
-conn = Connection(":memory:", check_same_thread=False)
+conn = Connection("benchmark.db", check_same_thread=False)
 resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
 
 
@@ -59,6 +59,7 @@ resonate.register_command_handler(InsertValue, _batch_handler, retry_policy=neve
 @click.option("--values", type=click.IntRange(0, 100_000))
 def cli(batch: bool, values: int):
     # conn.execute("DROP TABLE IF EXISTS benchmark")
+    conn.execute("DROP TABLE IF EXISTS benchmark")
     conn.execute(
         "CREATE TABLE IF NOT EXISTS benchmark (id INTEGER PRIMARY KEY, value INTEGER)"
     )
