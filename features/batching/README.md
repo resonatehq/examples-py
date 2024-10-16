@@ -39,11 +39,11 @@ resonate.register_command_handler(InsertValue, _batch_handler, retry_policy=neve
 
 ```bash
 rye run batching --batch --values 1_000
-# Inserting 1,000 values took 0.070747 seconds with batching=True
+# Inserting 1,000 values took 0.126298 seconds with batching=True
 rye run batching --batch --values 10_000
-# Inserting 10,000 values took 0.854411 seconds with batching=True
+# Inserting 10,000 values took 1.542089 seconds with batching=True
 rye run batching --batch --values 100_000
-# Inserting 100,000 values took 10.883661 seconds with batching=True
+# Inserting 100,000 values took 18.734758 seconds with batching=True
 ```
 
 ```py
@@ -70,9 +70,9 @@ resonate.register(create_user_sequentially, retry_policy=never())
 
 ```bash
 rye run batching --no-batch --values 1_000
-# Inserting 1,000 values took 0.273321 seconds with batching=False
+# Inserting 1,000 values took 0.337179 seconds with batching=False
 rye run batching --no-batch --values 10_000
-# Inserting 10,000 values took 9.444141 seconds with batching=False
+# Inserting 10,000 values took 3.863877 seconds with batching=False
 rye run batching --no-batch --values 100_000
-# Inserting 100,000 values took 33.263223 seconds with batching=False
+# Inserting 100,000 values took 41.137054 seconds with batching=False
 ```
