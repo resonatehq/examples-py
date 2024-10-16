@@ -14,15 +14,13 @@ conn = Connection("benchmark.db", check_same_thread=False)
 resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
 
 
-def _create_user(ctx: Context, value: int):
-    conn.execute("INSERT INTO benchmark (value) VALUES (?)", (value,))
-    conn.commit()
+def notify(ctx: Context, value):
     print(f"Value {value} has been inserted to database")
 
 
-def create_user_sequentially(ctx: Context, v: int):
-    p = yield ctx.lfi(_create_user, v).with_options(retry_policy=never())
-    yield p
+def _create_user(ctx: Context, value: int):
+    conn.execute("INSERT INTO benchmark (value) VALUES (?)", (value,))
+    conn.commit()
 
 
 @dataclass
@@ -32,18 +30,21 @@ class InsertValue(Command):
 
 
 def _batch_handler(ctx: Context, cmds: list[InsertValue]):
-    first_value = cmds[0].value
-    last_value = None
     for cmd in cmds:
         conn.execute("INSERT INTO benchmark (value) VALUES (?)", (cmd.value,))
-        last_value = cmd.value
     conn.commit()
-    print(f"Values from {first_value} to {last_value} have been inserted to database.")
 
 
 def create_user_batching(ctx: Context, v: int):
     p = yield ctx.lfi(InsertValue(conn, v))
     yield p
+    yield ctx.lfc(notify, v)
+
+
+def create_user_sequentially(ctx: Context, v: int):
+    p = yield ctx.lfi(_create_user, v).with_options(retry_policy=never())
+    yield p
+    yield ctx.lfc(notify, v)
 
 
 # register top level function.
