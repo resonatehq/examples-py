@@ -2,13 +2,8 @@
 name = "batching"
 version = "0.1.0"
 description = "Add your description here"
-authors = [
-    { name = "Tomperez98", email = "tomasperezalvarez@gmail.com" }
-]
-dependencies = [
-    "resonate-sdk @ file:///Users/tomasperez/Documents/resonate/resonate-sdk-py",
-    "click>=8.1.7",
-]
+authors = [{ name = "Tomperez98", email = "tomasperezalvarez@gmail.com" }]
+dependencies = ["resonate-sdk >= 0.1.33", "click>=8.1.7"]
 readme = "README.md"
 requires-python = ">= 3.9"
 

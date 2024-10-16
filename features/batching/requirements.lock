@@ -25,7 +25,7 @@ opentelemetry-sdk==1.27.0
 opentelemetry-semantic-conventions==0.48b0
 protobuf==4.25.5
 requests==2.32.3
-resonate-sdk @ file:///Users/tomasperez/Documents/resonate/resonate-sdk-py
+resonate-sdk==0.1.33
 typing-extensions==4.12.2
 urllib3==2.2.3
 wrapt==1.16.0
