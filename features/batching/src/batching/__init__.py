@@ -12,7 +12,7 @@ import sqlite3
 conn = sqlite3.connect("your_database.db", check_same_thread=False)
 
 # Create a Resonate Scheduler with an in memore promise store
-resonate = Scheduler(LocalPromiseStore, processor_threads=1)
+resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
 
 # Define a data structure for the Resonate SDK to track and create batches of
 @dataclass
@@ -51,7 +51,7 @@ def main() -> None:
     )
     # Create an array to hold the promises
     promises = []
-    
+
     for v in range(10000):
         p = resonate.run(f"insert-value-{v}", create_user_batching, v)
         promises.append(p)
