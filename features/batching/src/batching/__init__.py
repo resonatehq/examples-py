@@ -12,6 +12,7 @@ import time
 
 conn = Connection("benchmark.db", check_same_thread=False)
 resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
+# resonate = Scheduler(RemotePromiseStore("http://localhost:8001"), processor_threads=1)
 
 
 def notify(ctx: Context, value):
@@ -25,7 +26,6 @@ def _create_user(ctx: Context, value: int):
 
 @dataclass
 class InsertValue(Command):
-    conn: Connection
     value: int
 
 
@@ -36,15 +36,15 @@ def _batch_handler(ctx: Context, cmds: list[InsertValue]):
 
 
 def create_user_batching(ctx: Context, v: int):
-    p = yield ctx.lfi(InsertValue(conn, v))
+    p = yield ctx.lfi(InsertValue(v)).with_options(durable=False)
     yield p
-    yield ctx.lfc(notify, v)
+    yield ctx.lfc(notify, v).with_options(durable=False)
 
 
 def create_user_sequentially(ctx: Context, v: int):
-    p = yield ctx.lfi(_create_user, v).with_options(retry_policy=never())
+    p = yield ctx.lfi(_create_user, v).with_options(retry_policy=never(), durable=False)
     yield p
-    yield ctx.lfc(notify, v)
+    yield ctx.lfc(notify, v).with_options(durable=False)
 
 
 # register top level function.
