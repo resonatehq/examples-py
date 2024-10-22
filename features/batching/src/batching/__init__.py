@@ -26,7 +26,7 @@ def _batch_handler(_: Context, users: list[InsertUser]):
     for user in users:
         conn.execute("INSERT INTO users (value) VALUES (?)", (user.id,))
     conn.commit()
-    print(f"{len(users)} have been inserted to database.")
+    print(f"{len(users)} users have been inserted to database.")
 
 # Definte the top level function that uses batching
 def create_user_batching(ctx: Context, u: int):

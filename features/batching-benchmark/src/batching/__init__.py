@@ -37,13 +37,11 @@ class InsertUser(Command):
 # Define a function that inserts a batch of rows into the database
 # The main difference is that commit() is only called after all the Insert statements are executed
 def _batch_handler(ctx: Context, users: list[InsertUser]):
-    first_user = users[0].id
-    last_user = None
+    # error handling ommitted for this example
     for user in users:
         conn.execute("INSERT INTO users (value) VALUES (?)", (user.id,))
-        last_user = user.id
     conn.commit()
-    print(f"Users from {first_user} to {last_user} have been inserted to database.")
+    print(f"{len(users)} users have been inserted to database.")
 
 # Definte the top level function that uses batching
 def create_user_batching(ctx: Context, u: int):
