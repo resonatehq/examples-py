@@ -13,7 +13,7 @@ import time
 # Create a connection with that database
 conn = sqlite3.connect("your_database.db", check_same_thread=False)
 
-# Create a Resonate Scheduler with an in memore promise store
+# Create a Resonate Scheduler with an in memory promise store
 resonate = Scheduler(LocalPromiseStore(), processor_threads=1)
 
 ### SEQUENTIAL INSERTS
