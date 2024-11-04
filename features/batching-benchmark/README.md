@@ -19,13 +19,13 @@ rye sync
 To test sequential writes, use the --no-batch flag and pass the number of writes:
 
 ```shell
-rye run batching --no-batch --values=1000
+rye run batching --no-batch --users=1000
 ```
 
 To test batched writes, use the --batch flag and pass the number of writes:
 
 ```shell
-rye run batching --batch --values=1000
+rye run batching --batch --users=1000
 ```
 
 ## Still sequential looking code, simple, but faster and cheaper.
@@ -68,11 +68,11 @@ resonate.register_command_handler(InsertValue, _batch_handler, retry_policy=neve
 ```
 
 ```bash
-rye run batching --batch --values 1_000
+rye run batching --batch --users 1_000
 # Inserting 1,000 values took 0.070747 seconds with batching=True
-rye run batching --batch --values 10_000
+rye run batching --batch --users 10_000
 # Inserting 10,000 values took 0.854411 seconds with batching=True
-rye run batching --batch --values 100_000
+rye run batching --batch --users 100_000
 # Inserting 100,000 values took 10.883661 seconds with batching=True
 ```
 
@@ -99,10 +99,10 @@ resonate.register(create_user_sequentially, retry_policy=never())
 ```
 
 ```bash
-rye run batching --no-batch --values 1_000
+rye run batching --no-batch --users 1_000
 # Inserting 1,000 values took 0.273321 seconds with batching=False
-rye run batching --no-batch --values 10_000
+rye run batching --no-batch --users 10_000
 # Inserting 10,000 values took 9.444141 seconds with batching=False
-rye run batching --no-batch --values 100_000
+rye run batching --no-batch --users 100_000
 # Inserting 100,000 values took 33.263223 seconds with batching=False
 ```
