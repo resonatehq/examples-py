@@ -5,15 +5,10 @@ build/
 dist/
 wheels/
 *.egg-info
-
-# venv
 .venv
-
-# db
 *.db
-
-# dst_logs
+db.sqlite3
+.mypy_chache
+.ruff_chache
 .logs
-
-# mypy
 .dmypy.json

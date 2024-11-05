@@ -1,4 +1,3 @@
-# @@@SNIPSTART quickstart-py-part-3-app
 from resonate.storage.resonate_server import RemoteServer
 from resonate.scheduler import Scheduler
 from resonate.context import Context
@@ -60,5 +59,3 @@ def main():
 # Run the main function when the script is executed
 if __name__ == "__main__":
     main()
-
-# @@@SNIPEND
