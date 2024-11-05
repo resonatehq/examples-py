@@ -1,5 +1,5 @@
 [project]
-name = "human-in-the-loop"
+name = "summarize"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
@@ -10,13 +10,10 @@ dependencies = [
     "flask>=3.0.3",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.12"
 
 [project.scripts]
-    "wf-service" = "human_in_the_loop.workflow_service:main"
-    "wf-service-b" = "human_in_the_loop.workflow_service_b:main"
-    "conf-service" = "human_in_the_loop.confirmation_service:main"
-    "email-service" = "human_in_the_loop.email_service:main"
+    "app" = "summarize.gateway:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -24,10 +21,15 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = []
+dev-dependencies = [
+    "mypy>=1.11.2",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/human_in_the_loop"]
+packages = ["src/summarize"]
+
+[tool.rye.scripts]
+check-types = "dmypy run --timeout 60 -- src"

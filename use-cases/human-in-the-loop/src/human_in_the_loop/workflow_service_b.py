@@ -1,10 +1,8 @@
-from flask import Flask, jsonify, request
 from resonate.scheduler import Scheduler
 from resonate.context import Context
 from resonate.storage.resonate_server import RemoteServer
 from resonate.commands import CreateDurablePromiseReq
 
-app = Flask(__name__)
 resonate = Scheduler(
     RemoteServer(url="http://localhost:8001"), logic_group="workflow-service"
 )
@@ -45,21 +43,10 @@ def workflow(ctx: Context, email: str):
 resonate.register(name="workflow", func=workflow)
 
 
-@app.route("/start", methods=["POST"])
-def start_workflow_route_handler():
-    try:
-        data = request.get_json()
-        if "email" not in data:
-            return jsonify({"error": "email is required"}), 400
-        email = data["email"]
-        resonate.run(f"workflow-{email}", workflow, email)
-        return jsonify({"result": "workflow started"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 
 def main() -> None:
-    app.run(host="0.0.0.0", port=5000)
+    print(f"Workflow service B running")
+    resonate.wait_forever()
 
 
 if __name__ == "__main__":
