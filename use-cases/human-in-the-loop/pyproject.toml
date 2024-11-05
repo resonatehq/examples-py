@@ -1,0 +1,33 @@
+[project]
+name = "human-in-the-loop"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Cully Wakelin", email = "cully.wakelin@resonatehq.io" }
+]
+dependencies = [
+    "resonate-sdk>=0.2.2",
+    "flask>=3.0.3",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[project.scripts]
+    "wf-service" = "human_in_the_loop.workflow_service:main"
+    "wf-service-b" = "human_in_the_loop.workflow_service_b:main"
+    "conf-service" = "human_in_the_loop.confirmation_service:main"
+    "email-service" = "human_in_the_loop.email_service:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/human_in_the_loop"]
