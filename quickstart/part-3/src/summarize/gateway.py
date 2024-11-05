@@ -1,3 +1,4 @@
+# @@@SNIPSTART quickstart-py-part-3-gateway
 from flask import Flask, request, jsonify
 from resonate.scheduler import Scheduler
 from resonate.storage.resonate_server import RemoteServer
@@ -45,3 +46,5 @@ def main():
 # Run the main function when the script is executed
 if __name__ == "__main__":
     main()
+
+# @@@SNIPEND
