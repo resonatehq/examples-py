@@ -11,30 +11,25 @@ app = Flask(__name__)
 store = RemoteServer(url="http://localhost:8001")
 resonate = Scheduler(store)
 
-# emails = []
-# run = True
-
-
-# def confirm_email(ctx: Context, email: str):
-#     confirmed = False
-#     while run:
-#         print(f"Waiting on human to confirm {email}")
-#         for e in emails:
-#             if e == email:
-#                 print(f"Email {email} has been confirmed")
-#                 confirmed = True
-#                 break # Exit the for loop when email is confirmed
-#         if confirmed:
-#             break  # Exit the while loop when confirmed is True
-#         time.sleep(10)
-#     return confirmed
-
-
-# resonate.register(confirm_email)
-
+@app.route("/start", methods=["POST"])
+def start_workflow_route_handler():
+    try:
+        data = request.get_json()
+        if "email" not in data:
+            return jsonify({"error": "email is required"}), 400
+        email = data["email"]
+        resonate.rfi(
+            promise_id=f"workflow-{email}",
+            func_name="workflow",
+            args=[email],
+            target="workflow-service"
+        )
+        return jsonify({"result": "workflow started"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/confirm", methods=["POST"])
-def start_workflow_route_handler():
+def confirm_email_route_handler():
     global store
     try:
         data = request.get_json()
@@ -54,7 +49,7 @@ def start_workflow_route_handler():
 
 
 def main() -> None:
-    app.run(host="0.0.0.0", port=5001)
+    app.run(host="0.0.0.0", port=5000)
 
 
 if __name__ == "__main__":
