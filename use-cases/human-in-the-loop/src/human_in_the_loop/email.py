@@ -1,6 +1,7 @@
+from resonate.storage.resonate_server import RemoteServer
 from resonate.scheduler import Scheduler
 from resonate.context import Context
-from resonate.storage.resonate_server import RemoteServer
+
 
 resonate = Scheduler(
     RemoteServer(url="http://localhost:8001"), logic_group="email-service"

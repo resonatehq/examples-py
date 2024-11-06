@@ -1,15 +1,12 @@
-from flask import Flask, jsonify, request
-from resonate.scheduler import Scheduler
-
-# from resonate.context import Context
 from resonate.storage.resonate_server import RemoteServer
-
-# import time
+from resonate.scheduler import Scheduler
+from flask import Flask, jsonify, request
 import json
 
 app = Flask(__name__)
 store = RemoteServer(url="http://localhost:8001")
 resonate = Scheduler(store)
+
 
 @app.route("/start", methods=["POST"])
 def start_workflow_route_handler():
@@ -22,11 +19,12 @@ def start_workflow_route_handler():
             promise_id=f"workflow-{email}",
             func_name="workflow",
             args=[email],
-            target="workflow-service"
+            target="workflow-service",
         )
         return jsonify({"result": "workflow started"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/confirm", methods=["POST"])
 def confirm_email_route_handler():

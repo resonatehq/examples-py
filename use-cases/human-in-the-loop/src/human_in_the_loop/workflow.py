@@ -1,19 +1,21 @@
-from resonate.scheduler import Scheduler
-from resonate.context import Context
 from resonate.storage.resonate_server import RemoteServer
 from resonate.commands import CreateDurablePromiseReq
+from resonate.scheduler import Scheduler
+from resonate.context import Context
+
 
 resonate = Scheduler(
     RemoteServer(url="http://localhost:8001"), logic_group="workflow-service"
 )
 
 
-def step3(ctx: Context):
-    print("Next step in the workflow started.")
+def step3(ctx: Context, email: str):
+    print(f"Next step for user {email} started.")
 
 
 def workflow(ctx: Context, email: str):
     print(f"Workflow for user {email} started.")
+
     # Step 1 - send email with a link to confirm
     yield ctx.rfc(
         CreateDurablePromiseReq(
@@ -34,7 +36,7 @@ def workflow(ctx: Context, email: str):
     print(f"Email address {email} confirmed: {confirmation}")
 
     # Step 3
-    yield ctx.lfc(step3)
+    yield ctx.lfc(step3, email)
 
     # Add as many steps as needed
 

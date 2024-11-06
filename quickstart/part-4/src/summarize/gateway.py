@@ -1,9 +1,10 @@
-# @@@SNIPSTART quickstart-py-part-3-gateway
+# @@@SNIPSTART quickstart-py-part-4-gateway
 from flask import Flask, request, jsonify
 from resonate.scheduler import Scheduler
 from resonate.storage.resonate_server import RemoteServer
 from resonate.context import Context
 from resonate.commands import CreateDurablePromiseReq
+import json
 
 app = Flask(__name__)
 
@@ -33,6 +34,26 @@ def summarize_route_handler():
 
         # Return the result as JSON
         return jsonify({"summary": "workflow started"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/confirm", methods=["POST"])
+def confirm_email_route_handler():
+    global store
+    try:
+        data = request.get_json()
+        if "email" not in data:
+            return jsonify({"error": "email param is required"}), 400
+        email = data[""]
+        store.resolve(
+            promise_id=f"sumarization-confirmed-{url}",
+            ikey=None,
+            strict=False,
+            headers=None,
+            data=json.dumps(True),
+        )
+        return jsonify({"message": f"Email {email} confirmed."}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
