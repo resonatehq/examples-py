@@ -48,7 +48,7 @@ def confirm_email_route_handler():
         # Check if the required parameters are present
         if not url or confirm is None or attempt is None:
             return jsonify({"error": "url and confirmation params are required"}), 400
-        # Parse parameters
+        # Convert to boolean
         confirm = confirm.lower() == "true"
         # Resolve the promise
         store.resolve(
