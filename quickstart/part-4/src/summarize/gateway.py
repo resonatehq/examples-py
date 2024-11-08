@@ -2,8 +2,6 @@
 from flask import Flask, request, jsonify
 from resonate.scheduler import Scheduler
 from resonate.storage.resonate_server import RemoteServer
-from resonate.context import Context
-from resonate.commands import CreateDurablePromiseReq
 import json
 
 app = Flask(__name__)

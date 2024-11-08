@@ -1,9 +1,7 @@
-# @@@SNIPSTART quickstart-py-part-4-gateway
+# @@@SNIPSTART quickstart-py-part-5-gateway
 from flask import Flask, request, jsonify
 from resonate.scheduler import Scheduler
 from resonate.storage.resonate_server import RemoteServer
-from resonate.context import Context
-from resonate.commands import CreateDurablePromiseReq
 import json
 import re
 
