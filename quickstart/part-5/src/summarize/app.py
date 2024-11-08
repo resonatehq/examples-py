@@ -39,7 +39,6 @@ def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
         if confirmed:
             break
         count += 1
-    # Return the summary
     print("Workflow completed")
     return
 
@@ -74,7 +73,10 @@ def summarize(ctx: Context, url: str, filename: str):
         summary = ollama.chat(
             model=model,
             messages=[
-                {"role": "system", "content": "You take text scraped from a website and summarize it. Ignore text that does not support the narrative and purpose of the website."},
+                {
+                    "role": "system",
+                    "content": "You take text scraped from a website and summarize it. Ignore text that does not support the narrative and purpose of the website.",
+                },
                 {"role": "user", "content": f"Content to summarize: {file_content}"},
             ],
             options=options,
@@ -87,8 +89,12 @@ def summarize(ctx: Context, url: str, filename: str):
 
 def send_email(ctx: Context, summary: str, url: str, email: str, attempt: int):
     print(f"Summary: {summary}")
-    print(f"Click to confirm: http://localhost:5000/confirm?url={url}&confirm=true&attempt={attempt}")
-    print(f"Click to reject: http://localhost:5000/confirm?url={url}&confirm=false&attempt={attempt}")
+    print(
+        f"Click to confirm: http://localhost:5000/confirm?url={url}&confirm=true&attempt={attempt}"
+    )
+    print(
+        f"Click to reject: http://localhost:5000/confirm?url={url}&confirm=false&attempt={attempt}"
+    )
     print("Email sent successfully")
     return
 

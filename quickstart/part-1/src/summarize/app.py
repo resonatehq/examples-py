@@ -25,7 +25,7 @@ def download(ctx: Context, url: str):
     return f"This is the content of {url}"
 
 
-def summarize(ctx: Context, url:str, content:str):
+def summarize(ctx: Context, url: str, content: str):
     print("Summarizing content...")
     time.sleep(2.5)
     # Simulate a failure to summarize content 50% of the time

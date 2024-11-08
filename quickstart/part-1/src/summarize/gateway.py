@@ -25,7 +25,9 @@ def summarize_route_handler():
         url = data["url"]
 
         # Run the summarize function asynchronously
-        promise = resonate.run(f"summarize-{url}", downloadAndSummarize, url=url)
+        promise = resonate.run(
+            f"downloadAndSummarize-{url}", downloadAndSummarize, url=url
+        )
 
         # Return the result as JSON
         return jsonify({"summary": promise.result()})

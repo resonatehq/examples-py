@@ -20,9 +20,13 @@ def downloadAndSummarize(ctx: Context, url: str, email: str):
     count = 1
     while True:
         # Summarize the downloaded content
-        summary = yield ctx.lfc(summarize, url, content).with_options(promise_id=f"sumarize-{url}-{count}")
+        summary = yield ctx.lfc(summarize, url, content).with_options(
+            promise_id=f"sumarize-{url}-{count}"
+        )
         # Send an email with the summary
-        yield ctx.lfc(send_email, summary, url, email, count).with_options(promise_id=f"summarization-email-{url}-{count}")
+        yield ctx.lfc(send_email, summary, url, email, count).with_options(
+            promise_id=f"summarization-email-{url}-{count}"
+        )
         print("Waiting on confirmation")
         confirmed = yield ctx.rfc(
             CreateDurablePromiseReq(
@@ -32,8 +36,7 @@ def downloadAndSummarize(ctx: Context, url: str, email: str):
         if confirmed:
             break
         count += 1
-    # Return the summary
-    print("Workflow completed")
+    print("Workflow complete")
     return
 
 
@@ -60,8 +63,12 @@ def summarize(ctx: Context, url: str, content: str):
 
 def send_email(ctx: Context, summary: str, url: str, email: str, attempt: int):
     print(f"Summary: {summary}")
-    print(f"Click to confirm: http://localhost:5000/confirm?url={url}&confirm=true&attempt={attempt}")
-    print(f"Click to reject: http://localhost:5000/confirm?url={url}&confirm=false&attempt={attempt}")
+    print(
+        f"Click to confirm: http://localhost:5000/confirm?url={url}&confirm=true&attempt={attempt}"
+    )
+    print(
+        f"Click to reject: http://localhost:5000/confirm?url={url}&confirm=false&attempt={attempt}"
+    )
     print("Email sent successfully")
     return
 

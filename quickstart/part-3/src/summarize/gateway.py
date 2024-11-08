@@ -25,7 +25,7 @@ def summarize_route_handler():
 
         # Use a Remote Function Invocation
         resonate.rfi(
-            promise_id=f"summarize-{url}",
+            promise_id=f"downloadAndSummarize-{url}",
             func_name="downloadAndSummarize",
             args=[url],
             target="summarization-nodes",
