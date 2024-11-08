@@ -5,6 +5,7 @@ from resonate.storage.resonate_server import RemoteServer
 from resonate.context import Context
 from resonate.commands import CreateDurablePromiseReq
 import json
+import re
 
 app = Flask(__name__)
 
@@ -26,11 +27,13 @@ def summarize_route_handler():
         url = data["url"]
         email = data["email"]
 
+        clean_url = clean(url)
+
         # Use a Remote Function Invocation
         resonate.rfi(
-            promise_id=f"downloadAndSummarize-{url}",
+            promise_id=f"downloadAndSummarize-{clean_url}",
             func_name="downloadAndSummarize",
-            args=[url, email],
+            args=[url, clean_url, email],
             target="summarization-nodes",
         )
 
@@ -40,19 +43,22 @@ def summarize_route_handler():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/confirm", methods=["POST"])
+@app.route("/confirm", methods=["GET"])
 def confirm_email_route_handler():
     global store
     try:
-        data = request.get_json()
-        if "url" and "confirm" not in data:
+        url = request.args.get("url")
+        confirm = request.args.get("confirm")
+        attempt = request.args.get("attempt")
+        # Check if the required parameters are present
+        if not url or confirm is None or attempt is None:
             return jsonify({"error": "url and confirmation params are required"}), 400
-        print(data)
-        url = data["url"]
-        confirm = data["confirm"]
-        attempt = data["attempt"]
+        # Parse parameters
+        confirm = confirm.lower() == "true"
+        clean_url = clean(url)
+        # Resolve the promise
         store.resolve(
-            promise_id=f"sumarization-confirmed-{url}-{attempt}",
+            promise_id=f"sumarization-confirmed-{clean_url}-{attempt}",
             ikey=None,
             strict=False,
             headers=None,
@@ -64,6 +70,11 @@ def confirm_email_route_handler():
             return jsonify({"message": f"Summarization rejected."}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+def clean(url):
+    tmp = re.sub(r"^https?://", "", url)
+    return tmp.replace("/", "-")
 
 
 # Define a main function to start the Flask app

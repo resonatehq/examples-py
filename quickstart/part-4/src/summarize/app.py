@@ -1,5 +1,6 @@
 # @@@SNIPSTART quickstart-py-part-4-app
 from resonate.storage.resonate_server import RemoteServer
+from resonate.commands import CreateDurablePromiseReq
 from resonate.scheduler import Scheduler
 from resonate.context import Context
 import random
@@ -10,18 +11,30 @@ resonate = Scheduler(
 )
 
 
-def downloadAndSummarize(ctx: Context, url: str):
+def downloadAndSummarize(ctx: Context, url: str, email: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
-    content = yield ctx.lfc(download, url).with_options(durable=False)
-    print(content)
+    content = yield ctx.lfc(download, url)
     # Add a delay so you have time to simulate a failure
     time.sleep(10)
-    # Summarize the downloaded content
-    summary = yield ctx.lfc(summarize, url, content).with_options(durable=False)
-    print(summary)
+    count = 1
+    while True:
+        # Summarize the downloaded content
+        summary = yield ctx.lfc(summarize, url, content).with_options(promise_id=f"sumarize-{url}-{count}")
+        # Send an email with the summary
+        yield ctx.lfc(send_email, summary, url, email, count).with_options(promise_id=f"summarization-email-{url}-{count}")
+        print("Waiting on confirmation")
+        confirmed = yield ctx.rfc(
+            CreateDurablePromiseReq(
+                promise_id=f"sumarization-confirmed-{url}-{count}",
+            )
+        )
+        if confirmed:
+            break
+        count += 1
     # Return the summary
-    return summary
+    print("Workflow completed")
+    return
 
 
 def download(ctx: Context, url: str):
@@ -43,6 +56,14 @@ def summarize(ctx: Context, url: str, content: str):
         raise Exception("Failed to summarize content")
     print("Summarization successful")
     return f"This is the summary of {url}."
+
+
+def send_email(ctx: Context, summary: str, url: str, email: str, attempt: int):
+    print(f"Summary: {summary}")
+    print(f"Click to confirm: http://localhost:5000/confirm?url={url}&confirm=true&attempt={attempt}")
+    print(f"Click to reject: http://localhost:5000/confirm?url={url}&confirm=false&attempt={attempt}")
+    print("Email sent successfully")
+    return
 
 
 resonate.register(

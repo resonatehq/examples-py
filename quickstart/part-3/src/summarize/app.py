@@ -13,12 +13,12 @@ resonate = Scheduler(
 def downloadAndSummarize(ctx: Context, url: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
-    content = yield ctx.lfc(download, url).with_options(durable=False)
+    content = yield ctx.lfc(download, url)
     print(content)
     # Add a delay so you have time to simulate a failure
     time.sleep(10)
     # Summarize the downloaded content
-    summary = yield ctx.lfc(summarize, url, content).with_options(durable=False)
+    summary = yield ctx.lfc(summarize, url, content)
     print(summary)
     # Return the summary
     return summary
