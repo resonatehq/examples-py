@@ -78,7 +78,7 @@ def summarize(ctx: Context, url: str, filename: str):
             messages=[
                 {
                     "role": "system",
-                    "content": "You take text scraped from a website and summarize it. Ignore text that does not support the narrative and purpose of the website.",
+                    "content": "You review text scraped from a website and summarize it. Ignore text that does not support the narrative and purpose of the website.",
                 },
                 {"role": "user", "content": f"Content to summarize: {file_content}"},
             ],
