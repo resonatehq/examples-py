@@ -12,27 +12,30 @@ import ollama
 resonate = Scheduler(
     RemoteServer(url="http://localhost:8001"), logic_group="summarization-nodes"
 )
-# Set the Ollama model as a dependency for the Application Node
-resonate._deps.set("model", "llama3.1")
 
 
+# highlight-next-line
 def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
+    # highlight-next-line
     filename = yield ctx.lfc(download, url, clean_url).with_options(durable=False)
     count = 1
     while True:
         # Summarize the downloaded content
         summary = yield ctx.lfc(summarize, url, filename).with_options(
+            # highlight-next-line
             promise_id=f"sumarize-{clean_url}-{count}"
         )
         # Send an email with the summary
         yield ctx.lfc(send_email, summary, url, email, count).with_options(
+            # highlight-next-line
             promise_id=f"summarization-email-{clean_url}-{count}"
         )
         print("Waiting on confirmation")
         confirmed = yield ctx.rfc(
             CreateDurablePromiseReq(
+                # highlight-next-line
                 promise_id=f"sumarization-confirmed-{clean_url}-{count}",
             )
         )
@@ -43,6 +46,7 @@ def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
     return
 
 
+# highlight-next-line
 def download(ctx: Context, url: str, clean_url: str):
     print(f"Downloading data from {url}")
     try:
@@ -67,11 +71,10 @@ def summarize(ctx: Context, url: str, filename: str):
         with open(filename, "r", encoding="utf-8") as f:
             file_content = f.read()
 
-        model = ctx.deps.get("model")
         options: ollama.Options | None = None
 
         summary = ollama.chat(
-            model=model,
+            model="llama3.1",
             messages=[
                 {
                     "role": "system",
