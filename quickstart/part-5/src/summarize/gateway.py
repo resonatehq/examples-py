@@ -24,7 +24,7 @@ def summarize_route_handler():
         # Extract the URL from the request
         url = data["url"]
         email = data["email"]
-
+        # highlight-next-line
         clean_url = clean(url)
 
         # Use a Remote Function Invocation
@@ -53,6 +53,7 @@ def confirm_email_route_handler():
             return jsonify({"error": "url and confirmation params are required"}), 400
         # Parse parameters
         confirm = confirm.lower() == "true"
+        # highlight-next-line
         clean_url = clean(url)
         # Resolve the promise
         store.resolve(
