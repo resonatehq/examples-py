@@ -1,13 +1,13 @@
 # @@@SNIPSTART quickstart-py-part-1-gateway
 from flask import Flask, request, jsonify
-from resonate.scheduler import Scheduler
-from resonate.storage.local_store import LocalStore
+from resonate.resonate import Resonate
+from resonate.stores.local import LocalStore, MemoryStorage
 from summarize.app import downloadAndSummarize
 
 app = Flask(__name__)
 
 # Create a Resonate Scheduler
-resonate = Scheduler(durable_promise_storage=LocalStore())
+resonate = Resonate(store=LocalStore(MemoryStorage()))
 # Register the downloadAndSummarize function with the Resonate scheduler
 resonate.register(downloadAndSummarize)
 
