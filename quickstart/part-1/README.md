@@ -6,6 +6,8 @@ This example application is meant to showcase Resonate's incremental adoption va
 
 This example is set up using [Rye](https://rye.astral.sh/) as the environment and package manager.
 
+Check the `pyproject.toml` file to see which version of the Python SDK is being used.
+
 **Terminal 1:**
 
 ```shell
