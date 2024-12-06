@@ -4,6 +4,7 @@ from summarize.app import downloadAndSummarize
 
 app = Flask(__name__)
 
+
 # Define a route handler for the /summarize endpoint
 @app.route("/summarize", methods=["POST"])
 def summarize_route_handler():

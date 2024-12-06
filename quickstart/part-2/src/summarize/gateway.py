@@ -1,16 +1,7 @@
-# @@@SNIPSTART quickstart-py-part-2-gateway
 from flask import Flask, request, jsonify
-from resonate.resonate import Resonate
-from resonate.stores.remote import RemoteServer
 from summarize.app import downloadAndSummarize
 
 app = Flask(__name__)
-
-# Create a Resonate Scheduler
-resonate = Resonate(durable_promise_storage=RemoteServer(url="http://localhost:8001"))
-
-# Register the downloadAndSummarize function with the Resonate scheduler
-resonate.register(downloadAndSummarize)
 
 
 # Define a route handler for the /summarize endpoint
@@ -26,9 +17,7 @@ def summarize_route_handler():
         url = data["url"]
 
         # Run the summarize function asynchronously
-        promise = resonate.run(
-            f"downloadAndSummarize-{url}", downloadAndSummarize, url=url
-        )
+        promise = downloadAndSummarize.run(id=f"downloadAndSummarize-{url}", url=url)
 
         # Return the result as JSON
         return jsonify({"summary": promise.result()})
@@ -45,4 +34,3 @@ def main():
 # Run the main function when the script is executed
 if __name__ == "__main__":
     main()
-# @@@SNIPEND

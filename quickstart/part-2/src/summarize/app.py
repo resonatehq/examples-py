@@ -1,9 +1,15 @@
+# @@@SNIPSTART quickstart-py-part-2-app
+from resonate.stores.remote import RemoteStore
+from resonate.resonate import Resonate
 from resonate.context import Context
 import random
 import time
 
+# Create an instance of Resonate with a remote promise store
+resonate = Resonate(store=RemoteStore(url="http://localhost:8001"))
 
-# @@@SNIPSTART quickstart-py-part-2-add-sleep
+# Define and register the downloadAndSummarize function with Resonate
+@resonate.register
 def downloadAndSummarize(ctx: Context, url: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
@@ -18,9 +24,6 @@ def downloadAndSummarize(ctx: Context, url: str):
     print(summary)
     # Return the summary
     return summary
-
-
-# @@@SNIPEND
 
 
 def download(ctx: Context, url: str):
@@ -42,3 +45,6 @@ def summarize(ctx: Context, url: str, content: str):
         raise Exception("Failed to summarize content")
     print("Summarization successful")
     return f"This is the summary of {url}."
+
+
+# @@@SNIPEND
