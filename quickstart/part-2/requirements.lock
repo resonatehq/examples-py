@@ -60,7 +60,7 @@ protobuf==4.25.5
 requests==2.32.3
     # via opentelemetry-exporter-otlp-proto-http
     # via resonate-sdk
-resonate-sdk==0.2.2
+resonate-sdk==0.3.3
     # via summarize
 typing-extensions==4.12.2
     # via opentelemetry-sdk

@@ -1,9 +1,15 @@
 # @@@SNIPSTART quickstart-py-part-1-app
 from resonate.context import Context
+from resonate.resonate import Resonate
+from resonate.stores.local import LocalStore, MemoryStorage
 import random
 import time
 
+# Create a Resonate instance with a local store
+resonate = Resonate(store=LocalStore(MemoryStorage()))
 
+# Define and register the downloadAndSummarize function
+@resonate.register
 def downloadAndSummarize(ctx: Context, url: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL

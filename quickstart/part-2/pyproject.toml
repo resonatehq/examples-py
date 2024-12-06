@@ -6,7 +6,7 @@ authors = [
     { name = "Cully Wakelin", email = "cully.wakelin@resonatehq.io" }
 ]
 dependencies = [
-    "resonate-sdk>=0.2.2",
+    "resonate-sdk>=0.3.3",
     "flask>=3.0.3",
 ]
 readme = "README.md"
