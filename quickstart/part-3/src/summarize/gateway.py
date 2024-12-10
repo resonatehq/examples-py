@@ -1,12 +1,25 @@
 # @@@SNIPSTART quickstart-py-part-3-gateway
+from resonate.task_sources.poller import Poller
+from resonate.stores.remote import RemoteStore
+from resonate.resonate import Resonate
+from resonate.context import Context
+from resonate.targets import poll
 from flask import Flask, request, jsonify
-from resonate.scheduler import Scheduler
-from resonate.storage.resonate_server import RemoteServer
+
 
 app = Flask(__name__)
 
 # Create a Resonate Scheduler
-resonate = Scheduler(durable_promise_storage=RemoteServer(url="http://localhost:8001"))
+resonate = Resonate(store=RemoteStore(url="http://localhost:8001"),task_source=Poller(url="http://localhost:8002", group="gateway"))
+
+
+# Define and register a top-level orchestrator coroutine
+@resonate.register
+def dispatch(ctx: Context, url: str):
+    yield ctx.rfi("downloadAndSummarize", url).options(
+        send_to=poll("summarization-nodes")
+    )
+    return
 
 
 # Define a route handler for the /summarize endpoint
@@ -22,12 +35,8 @@ def summarize_route_handler():
         url = data["url"]
 
         # Use a Remote Function Invocation
-        resonate.rfi(
-            promise_id=f"downloadAndSummarize-{url}",
-            func_name="downloadAndSummarize",
-            args=[url],
-            target="summarization-nodes",
-        )
+
+        dispatch.run(id=f"downloadAndSummarize-{url}", url=url)
 
         # Return the result as JSON
         return jsonify({"summary": "workflow started"}), 200

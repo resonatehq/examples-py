@@ -1,15 +1,19 @@
 # @@@SNIPSTART quickstart-py-part-1-app
+from resonate.context import Context
 from resonate.stores.local import LocalStore, MemoryStorage
 from resonate.resonate import Resonate
-from resonate.context import Context
+from flask import Flask, request, jsonify
 import random
 import time
+
+app = Flask(__name__)
 
 # Create a Resonate instance with a local store
 resonate = Resonate(store=LocalStore(MemoryStorage()))
 
 
-# Define and register the downloadAndSummarize function
+# Define the downloadAndSummarize workflow
+# Register it with Resonate as a top-level orchestrating generator
 @resonate.register
 def downloadAndSummarize(ctx: Context, url: str):
     print("Downloading and summarizing content from", url)
@@ -43,4 +47,34 @@ def summarize(ctx: Context, url: str, content: str):
     return f"This is the summary of {url}."
 
 
+# Define a route handler for the /summarize endpoint
+@app.route("/summarize", methods=["POST"])
+def summarize_route_handler():
+    try:
+        # Extract JSON data from the request
+        data = request.get_json()
+        if "url" not in data:
+            return jsonify({"error": "URL not provided"}), 400
+
+        # Extract the URL from the request
+        url = data["url"]
+
+        # Run the summarize function asynchronously
+        promise = downloadAndSummarize.run(id=f"downloadAndSummarize-{url}", url=url)
+
+        # Return the result as JSON
+        return jsonify({"summary": promise.result()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Define a main function to start the Flask app
+def main():
+    app.run(host="127.0.0.1", port=5000)
+    print("Serving HTTP on port 5000...")
+
+
+# Run the main function when the script is invoked
+if __name__ == "__main__":
+    main()
 # @@@SNIPEND

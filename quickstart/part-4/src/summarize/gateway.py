@@ -1,14 +1,21 @@
+from resonate.stores.remote import RemoteStore
+from resonate.resonate import Resonate
+from resonate.context import Context
+from resonate.targets import poll
 from flask import Flask, request, jsonify
-from resonate.scheduler import Scheduler
-from resonate.storage.resonate_server import RemoteServer
 import json
 
 app = Flask(__name__)
 
 # Create a Resonate Scheduler
-store = RemoteServer(url="http://localhost:8001")
-resonate = Scheduler(store)
+store = RemoteStore(url="http://localhost:8001")
+resonate = Resonate(store=store)
 
+# Define and register a top-level orchestrating coroutine
+@resonate.register
+def dispatch(ctx: Context, url: str, email: str):
+    yield ctx.rfi("downloadAndSummarize", url, email).options(send_to=poll("summarization-nodes"))
+    return
 
 # @@@SNIPSTART quickstart-py-part-4-gateway-summarize-route
 # Define a route handler for the /summarize endpoint
@@ -25,14 +32,7 @@ def summarize_route_handler():
         # highlight-next-line
         email = data["email"]
 
-        # Use a Remote Function Invocation
-        resonate.rfi(
-            promise_id=f"downloadAndSummarize-{url}",
-            func_name="downloadAndSummarize",
-            # highlight-next-line
-            args=[url, email],
-            target="summarization-nodes",
-        )
+        dispatch.run(f"downloadAndSummarize-{url}", url, email)        
 
         # Return the result as JSON
         return jsonify({"summary": "workflow started"}), 200

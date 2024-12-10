@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">= 3.12"
 
 [project.scripts]
-    "app" = "summarize.gateway:main"
+    "app" = "summarize.app:main"
 
 [build-system]
 requires = ["hatchling"]

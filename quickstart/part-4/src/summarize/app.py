@@ -1,16 +1,20 @@
 # @@@SNIPSTART quickstart-py-part-4-app
-from resonate.storage.resonate_server import RemoteServer
-from resonate.commands import CreateDurablePromiseReq
-from resonate.scheduler import Scheduler
+from resonate.task_sources.poller import Poller
+from resonate.stores.remote import RemoteStore
+from resonate.commands import DurablePromise
+from resonate.resonate import Resonate
 from resonate.context import Context
+from threading import Event
 import random
 import time
 
-resonate = Scheduler(
-    RemoteServer(url="http://localhost:8001"), logic_group="summarization-nodes"
+resonate = Resonate(
+    store=RemoteStore(url="http://localhost:8001"),
+    task_source=Poller(url="http://localhost:8002", group="summarization-nodes"),
 )
 
-
+# Define and register the downloadAndSummarize workflow
+@resonate.register
 def downloadAndSummarize(ctx: Context, url: str, email: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
@@ -29,7 +33,7 @@ def downloadAndSummarize(ctx: Context, url: str, email: str):
         )
         print("Waiting on confirmation")
         confirmed = yield ctx.rfc(
-            CreateDurablePromiseReq(
+            DurablePromise(
                 promise_id=f"sumarization-confirmed-{url}-{count}",
             )
         )
@@ -73,16 +77,10 @@ def send_email(ctx: Context, summary: str, url: str, email: str, attempt: int):
     return
 
 
-resonate.register(
-    name="downloadAndSummarize",
-    func=downloadAndSummarize,
-)
-
-
 # Define a main function to start the Application Node
 def main():
     print("App node running")
-    resonate.wait_forever()
+    Event().wait()
 
 
 # Run the main function when the script is executed

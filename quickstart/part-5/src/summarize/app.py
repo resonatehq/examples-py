@@ -1,42 +1,47 @@
 # @@@SNIPSTART quickstart-py-part-5-app
-from resonate.storage.resonate_server import RemoteServer
-from resonate.commands import CreateDurablePromiseReq
-from resonate.scheduler import Scheduler
+from resonate.commands import DurablePromise
+from resonate.task_sources.poller import Poller
+from resonate.stores.remote import RemoteStore
+from resonate.resonate import Resonate
 from resonate.context import Context
 from selenium import webdriver
 from bs4 import BeautifulSoup
+from threading import Event
 import ollama
+import os
 
 
 # Initialize the Resonate Scheduler using the Resonate Server as remote storage
-resonate = Scheduler(
-    RemoteServer(url="http://localhost:8001"), logic_group="summarization-nodes"
+resonate = Resonate(
+    store=RemoteStore(url="http://localhost:8001"),
+    task_source=Poller(url="http://localhost:8002", group="summarization-nodes"),
 )
 
 
 # highlight-next-line
+@resonate.register
 def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
     # highlight-next-line
-    filename = yield ctx.lfc(download, url, clean_url).with_options(durable=False)
+    filename = yield ctx.lfc(download, url, clean_url).options(durable=False)
     count = 1
     while True:
         # Summarize the downloaded content
-        summary = yield ctx.lfc(summarize, url, filename).with_options(
+        summary = yield ctx.lfc(summarize, url, filename).options(
             # highlight-next-line
-            promise_id=f"sumarize-{clean_url}-{count}"
+            id=f"sumarize-{clean_url}-{count}"
         )
         # Send an email with the summary
-        yield ctx.lfc(send_email, summary, url, email, count).with_options(
+        yield ctx.lfc(send_email, summary, url, email, count).options(
             # highlight-next-line
-            promise_id=f"summarization-email-{clean_url}-{count}"
+            id=f"summarization-email-{clean_url}-{count}"
         )
         print("Waiting on confirmation")
         confirmed = yield ctx.rfc(
-            CreateDurablePromiseReq(
+            DurablePromise(
                 # highlight-next-line
-                promise_id=f"sumarization-confirmed-{clean_url}-{count}",
+                id=f"sumarization-confirmed-{clean_url}-{count}",
             )
         )
         if confirmed:
@@ -48,13 +53,19 @@ def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
 
 # highlight-next-line
 def download(ctx: Context, url: str, clean_url: str):
+    filename = f"{clean_url}.txt"
+    
+    # Check if the file already exists
+    if os.path.exists(filename):
+        print(f"File {filename} already exists. Skipping download.")
+        return filename
+    
     print(f"Downloading data from {url}")
     try:
         driver = webdriver.Chrome()
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         content = soup.get_text()
-        filename = f"{clean_url}.txt"
         with open(filename, "w", encoding="utf-8") as f:
             f.write(content)
         driver.quit()
@@ -102,16 +113,10 @@ def send_email(ctx: Context, summary: str, url: str, email: str, attempt: int):
     return
 
 
-resonate.register(
-    name="downloadAndSummarize",
-    func=downloadAndSummarize,
-)
-
-
 # Define a main function to start the Application Node
 def main():
     print("App node running")
-    resonate.wait_forever()
+    Event().wait()
 
 
 # Run the main function when the script is executed
