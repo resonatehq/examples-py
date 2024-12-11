@@ -1,0 +1,296 @@
+DBOS | Build Reliable Backends 10x Faster, Scale to Millions with 1 Click
+
+
+
+
+
+
+
+
+
+
+Products
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DBOS CloudDeploy with a click, scale to millions
+
+
+
+
+
+
+
+
+
+DBOS TransactBuild a reliable backend 10x faster.PricingDocsResourcesAbout DBOSSee our story, meet our team.InsightsThe latest on cloud & reliable backends.Start your projectLogin
+
+
+
+
+
+
+
+
+LoginStart your projectReliable backends,built effortlesslyReliable backends,built effortlesslyDBOS is a serverless platform for building highly reliable applications.What takes days to build on AWS takes minutes on DBOS.Start your projectNo credit card required.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Event-driven processing
+
+
+
+
+
+
+
+
+
+Reliable workflows
+
+
+
+
+
+
+
+
+
+Cron jobs
+
+
+
+
+
+
+
+
+
+Data pipelines
+
+
+
+
+
+
+
+
+
+Reliable AI agents
+
+
+
+
+
+
+
+
+
+Webhooks & notificationsEvent-driven processingConsume Kafka messages exactly-once, no need to worry about timeouts or offsets.See an example
+
+
+@DBOS.kafka_consumer(config,["alerts-topic"])@DBOS.workflow()def process_kafka_alerts(msg: KafkaMessage):  alerts = msg.value.decode()  for alert in alerts:    respond_to_alert(alert)Create reliable workflowsWrite your business logic in normal code, with branches, loops, subtasks, and retries. DBOS makes it resilient to any failure.See an example
+
+
+@DBOS.workflow()def checkout_workflow(items):    order = create_order()    reserve_inventory(order, items)    payment_status = process_payment(order, items)    if payment_status == 'paid':        fulfill_order(order)    else:        undo_reserve_inventory(order, items)        cancel_order(order)Cron jobs made easySchedule workflows to run at specific times.Host them completely serverlessly.See an example
+
+
+@DBOS.scheduled("0 * * * *") # Run once an hour@DBOS.workflow()def run_hourly(scheduled_time: datetime, actual_time: datetime):   results = search_hackernews("serverless")   for comment, url in results:      post_to_slack(comment, url)Resilient data pipelinesBuild data pipelines that are reliable and observable by default.DBOS durable queues guarantee all your tasks complete.See an example
+
+
+queue = Queue("indexing_queue")@DBOS.workflow()def indexing_workflow(urls: List[HttpUrl]):  handles: List[WorkflowHandle] = []  for url in urls:    	handle = queue.enqueue(index_document, url)    	handles.append(handle)	indexed_pages = 0 for handle in handles:    		indexed_pages += handle.get_result()	logger.info(f"Indexed {len(urls)} documents totaling {indexed_pages} pages")Reliable AI agentsEnhance your AI workflows with DBOS, build reliable AI agents with automatic retries and no limit on how long they can run for.See an example
+
+
+@DBOS.step(retries_allowed=True, max_attempts=2)def process_refund(item, reason):    return f"Processed refund for item {item}, because {reason}"@DBOS.step(retries_allowed=True, max_attempts=3)def apply_discount(amount):    return f"Applied discount of {amount}%"refunds_agent = Agent(    name="Refunds Agent",    instructions="Help the user with a refund. If the reason is that it was too expensive, offer the user a refund code.",    functions=[process_refund, apply_discount],)Webhooks & notificationsEffortlessly mix synchronous webhook code with asynchronous event processing. Reliably wait weeks or months for events, then use idempotency and durable execution to process them exactly once.See an example
+
+
+@slackapp.message()def handle_message(request: BoltRequest) -> None:  event_id = request.body["event_id"]  with SetWorkflowID(event_id):    DBOS.start_workflow(message_workflow,     request.body["event"])2024 Gartner® Cool Vendor™Enabling Efficient Cloud OperationsBrands building 10x fasterBrands building 10x fasterBrands building 10x fasterReliable backends built in minutes, not months.Reliable backends built in minutes, not months.Build 10x fasterJust code your business logic – that’s it.DBOS makes your apps reliable and observable by default.Compatible with: Python Typescript Postgres AWS Node.js KafkaOnly pay while code executesServerless architecture means you don’t pay for idled CPU time.So while DBOS is doing more, you’re paying less.Deploy with a single clickServerlessly deploy your application with a single command.Automatically scale to millions of users.Start your projectNo credit card required.Easy to launch. Easy to scale.With one-click deployment, DBOS makes serverless simple.DBOS TransactA lightweight, open-source library for building highly reliable backendsSimply decorate your code to make it crashproof100% open-source, run it anywhereAutomatically generate and visualize workflow tracesExplore DBOS Transact
+
+
+DBOS CloudA seriously fast serverless platform for running cloud-native backends.Up to 25x faster than AWS Lambda + Step FunctionsOnly pay for the CPU time you actually useDeploy with a click, scale to millionsExplore DBOS Cloud
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Build with your favorite toolsDBOS works with your favorite tools and languages, including TypeScript, Python, and Postgres.What you can build on DBOSExperience serverless backends that are simpler, faster and more cost-efficient.AI-Powered SlackbotUse DBOS and LlamaIndex to build an AI-powered Slackbot that answers questions.Learn more
+
+
+eCommerce CheckoutUse DBOS durable workflows to build an eCommerce checkout resilient to failure.Learn more
+
+
+OpenAI QuickstartCreate an interactive AI application deployed in just 9 lines of code.Learn more
+
+
+LLM-Powered ChatbotBuild a chatbot with DBOS, and deploy it 50x cheaper than AWS.Learn more
+
+
+eCommerce CheckoutUse DBOS durable workflows to build an eCommerce checkout resilient to failure.Learn more
+
+
+AI-Powered SlackbotUse DBOS and LlamaIndex to build an AI-powered Slackbot that answers questions.Learn more
+
+
+OpenAI QuickstartCreate an interactive AI application deployed in just 9 lines of code.Learn more
+
+
+LLM-Powered ChatbotBuild a chatbot with DBOS, and deploy it 50x cheaper than AWS.Learn more
+
+
+
+
+
+
+
+
+Brands building 10x faster“What took us 2 months to build using a labyrinth of AWS resources took just 2 days on DBOS Cloud.”Thomas McNallyVP Technology, TMG.io"With DBOS, developers can build applications in days that now take months on conventional cloud platforms."Matei ZahariaCo-Founder, Databricks"DBOS isn't kidding when they say they make serverless simple. Their claims about speed and ease are right on."Vince FulcoCo-Founder, Bighire.ioTry DBOS Free. Forever.Try DBOS as long as you like with our free plan.An effortless, serverless solution that runs 25x faster.Start your projectBrowse pricing plans2024 Gartner® Cool Vendor™Enabling Efficient Cloud OperationsFAQsWill DBOS add support for other languages?
+
+
+DBOS applications are developed with the open source DBOS Transact framework, available for TypeScript and Python. We will implement the DBOS Transact framework in other languages based on popular demand.Please join the DBOS Community on Discord and let us know what language(s) you'd like us to support!What happens if my monthly usage exceeds the free tier settings?
+
+
+If your usage exceeds the free-use limits, we will not interrupt your service. What we will do is notify you via email that you've exceeded the free-use limit. In response to the email, you can either reduce your usage below the free-use limits or discuss DBOS pricing options with us.Can I run DBOS Cloud on-premises?
+
+
+The TypeScript and Python applications built with the DBOS Transact framework can be deployed and run on any platform. For production deployment, deploy your code from the DBOS Transact framework to DBOS Cloud.‍If you'd like to discuss running DBOS on a private cloud or on premises, please contact us.‍Follow the future of serverlessWhy Durable Execution Should Be LightweightDBOS ArchitectureNovember 5, 2024The Anatomy of DBOS CloudDBOS ArchitectureMay 10, 2024DBOS Named a 2024 Cool VendorCompanyAugust 5, 2024Improve your knowledge of cloud & reliable backendsForward-thinking, monthly updates.Perfect for devs building on cloud architecture.Advice on creating high-performing applications.You've successfully subscribed. Stay tuned!Oops! Please enter a valid email and try again.Only valuable insights, no spam. Unsubscribe in a single click.Build your reliable backend. Effortlessly.Contact salesStart your free projectDBOS radically simplifies cloud application devops and deployment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ProductsDBOS CloudDBOS TransactPricing PlansContact UsDevelopersDocsQuickstart GuideExamplesTutorialsCompanyAbout UsPrivacy PolicyTerms of ServiceCookiesCopyright © DBOS, Inc. 2024
+
+
+

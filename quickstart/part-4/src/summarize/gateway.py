@@ -11,11 +11,15 @@ app = Flask(__name__)
 store = RemoteStore(url="http://localhost:8001")
 resonate = Resonate(store=store)
 
+
 # Define and register a top-level orchestrating coroutine
 @resonate.register
 def dispatch(ctx: Context, url: str, email: str):
-    yield ctx.rfi("downloadAndSummarize", url, email).options(send_to=poll("summarization-nodes"))
+    yield ctx.rfi("downloadAndSummarize", url, email).options(
+        send_to=poll("summarization-nodes")
+    )
     return
+
 
 # @@@SNIPSTART quickstart-py-part-4-gateway-summarize-route
 # Define a route handler for the /summarize endpoint
@@ -32,7 +36,7 @@ def summarize_route_handler():
         # highlight-next-line
         email = data["email"]
 
-        dispatch.run(f"downloadAndSummarize-{url}", url, email)        
+        dispatch.run(f"downloadAndSummarize-{url}", url, email)
 
         # Return the result as JSON
         return jsonify({"summary": "workflow started"}), 200
@@ -48,26 +52,29 @@ def summarize_route_handler():
 def confirm_email_route_handler():
     global store
     try:
-        url = request.args.get("url")
+        # Extract parameters from the request
+        promise_id = request.args.get("promise_id")
         confirm = request.args.get("confirm")
-        attempt = request.args.get("attempt")
+    
         # Check if the required parameters are present
-        if not url or confirm is None or attempt is None:
+        if not promise_id or confirm is None:
             return jsonify({"error": "url and confirmation params are required"}), 400
+        
         # Convert to boolean
         confirm = confirm.lower() == "true"
+
         # Resolve the promise
         store.resolve(
-            promise_id=f"sumarization-confirmed-{url}-{attempt}",
+            id=promise_id,
             ikey=None,
             strict=False,
             headers=None,
             data=json.dumps(confirm),
         )
         if confirm:
-            return jsonify({"message": f"Summarization confirmed."}), 200
+            return jsonify({"message": "Summarization confirmed."}), 200
         else:
-            return jsonify({"message": f"Summarization rejected."}), 200
+            return jsonify({"message": "Summarization rejected."}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

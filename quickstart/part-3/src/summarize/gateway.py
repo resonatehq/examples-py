@@ -9,8 +9,11 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Create a Resonate Scheduler
-resonate = Resonate(store=RemoteStore(url="http://localhost:8001"),task_source=Poller(url="http://localhost:8002", group="gateway"))
+# Create an instance of Resonate
+resonate = Resonate(
+    store=RemoteStore(url="http://localhost:8001"),
+    task_source=Poller(url="http://localhost:8002", group="gateway"),
+)
 
 
 # Define and register a top-level orchestrator coroutine

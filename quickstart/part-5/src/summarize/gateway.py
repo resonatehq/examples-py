@@ -53,19 +53,20 @@ def summarize_route_handler():
 def confirm_email_route_handler():
     global store
     try:
-        url = request.args.get("url")
+        # Extract parameters from the request
+        promise_id = request.args.get("promise_id")
         confirm = request.args.get("confirm")
-        attempt = request.args.get("attempt")
+
         # Check if the required parameters are present
-        if not url or confirm is None or attempt is None:
+        if not promise_id or confirm is None:
             return jsonify({"error": "url and confirmation params are required"}), 400
-        # Parse parameters
+
+        # Convert to boolean
         confirm = confirm.lower() == "true"
-        # highlight-next-line
-        clean_url = clean(url)
+
         # Resolve the promise
         store.promises.resolve(
-            id=f"sumarization-confirmed-{clean_url}-{attempt}",
+            id=promise_id,
             ikey=None,
             strict=False,
             headers=None,

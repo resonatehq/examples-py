@@ -25,28 +25,23 @@ def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
     # Download the content from the provided URL
     # highlight-next-line
     filename = yield ctx.lfc(download, url, clean_url).options(durable=False)
-    count = 1
     while True:
         # Summarize the downloaded content
-        summary = yield ctx.lfc(summarize, url, filename).options(
-            # highlight-next-line
-            id=f"sumarize-{clean_url}-{count}"
-        )
+        summary = yield ctx.lfc(summarize, url, filename)
+
+        # Create a DurablePromise to wait for the confirmation
+        promise = yield ctx.rfi(DurablePromise(id=None))
+
         # Send an email with the summary
-        yield ctx.lfc(send_email, summary, url, email, count).options(
-            # highlight-next-line
-            id=f"summarization-email-{clean_url}-{count}"
-        )
+        yield ctx.lfc(send_email, summary, email, promise.id)
+
+        # Wait for the summary to be accepted or rejected
         print("Waiting on confirmation")
-        confirmed = yield ctx.rfc(
-            DurablePromise(
-                # highlight-next-line
-                id=f"sumarization-confirmed-{clean_url}-{count}",
-            )
-        )
+        confirmed = yield promise
+
         if confirmed:
             break
-        count += 1
+
     print("Workflow completed")
     return
 
@@ -54,12 +49,12 @@ def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
 # highlight-next-line
 def download(ctx: Context, url: str, clean_url: str):
     filename = f"{clean_url}.txt"
-    
+
     # Check if the file already exists
     if os.path.exists(filename):
         print(f"File {filename} already exists. Skipping download.")
         return filename
-    
+
     print(f"Downloading data from {url}")
     try:
         driver = webdriver.Chrome()
@@ -101,13 +96,13 @@ def summarize(ctx: Context, url: str, filename: str):
         raise Exception(f"Failed to summarize content: {e}")
 
 
-def send_email(ctx: Context, summary: str, url: str, email: str, attempt: int):
+def send_email(ctx: Context, summary: str, email: str, promise_id: str):
     print(f"Summary: {summary}")
     print(
-        f"Click to confirm: http://localhost:5000/confirm?url={url}&confirm=true&attempt={attempt}"
+        f"Click to confirm: http://localhost:5000/confirm?confirm=true&promise_id={promise_id}"
     )
     print(
-        f"Click to reject: http://localhost:5000/confirm?url={url}&confirm=false&attempt={attempt}"
+        f"Click to reject: http://localhost:5000/confirm?confirm=false&promise_id={promise_id}"
     )
     print("Email sent successfully")
     return
