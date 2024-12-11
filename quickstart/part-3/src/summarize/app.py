@@ -1,14 +1,17 @@
 # @@@SNIPSTART quickstart-py-part-3-app
+#highlight-next-line
 from resonate.task_sources.poller import Poller
 from resonate.stores.remote import RemoteStore
 from resonate.resonate import Resonate
 from resonate.context import Context
+# highlight-next-line
 from threading import Event
 import random
 import time
 
 resonate = Resonate(
     store=RemoteStore(url="http://localhost:8001"),
+    # highlight-next-line
     task_source=Poller(url="http://localhost:8002", group="summarization-nodes"),
 )
 
@@ -53,6 +56,7 @@ def summarize(ctx: Context, url: str, content: str):
 # Define a main function to start the Application Node
 def main():
     print("App node running")
+    # highlight-next-line
     Event().wait()
 
 
