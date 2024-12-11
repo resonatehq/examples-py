@@ -17,12 +17,14 @@ resonate = Resonate(
 )
 
 
+# highlight-start
 @resonate.register
 def dispatch(ctx: Context, url: str, clean_url: str, email: str):
     yield ctx.rfi("downloadAndSummarize", url, clean_url, email).options(
         send_to=poll("summarization-nodes")
     )
     return
+    # highlight-end
 
 
 # Define a route handler for the /summarize endpoint
@@ -41,6 +43,7 @@ def summarize_route_handler():
         clean_url = clean(url)
 
         # Use a Remote Function Invocation
+        # highlight-next-line
         dispatch.run(f"downloadAndSummarize-{clean_url}", url, clean_url, email)
 
         # Return the result as JSON
@@ -80,9 +83,11 @@ def confirm_email_route_handler():
         return jsonify({"error": str(e)}), 500
 
 
+# highlight-start
 def clean(url):
     tmp = re.sub(r"^https?://", "", url)
     return tmp.replace("/", "-")
+    # highlight-end
 
 
 # Define a main function to start the Flask app
