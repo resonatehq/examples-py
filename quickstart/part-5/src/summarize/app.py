@@ -18,9 +18,10 @@ resonate = Resonate(
 )
 
 
-# highlight-next-line
+# highlight-start
 @resonate.register
 def downloadAndSummarize(ctx: Context, url: str, clean_url: str, email: str):
+    # highlight-end
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
     # highlight-next-line
