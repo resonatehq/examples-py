@@ -1,9 +1,10 @@
 # @@@SNIPSTART quickstart-py-part-3-app
-#highlight-next-line
+# highlight-next-line
 from resonate.task_sources.poller import Poller
 from resonate.stores.remote import RemoteStore
 from resonate.resonate import Resonate
 from resonate.context import Context
+
 # highlight-next-line
 from threading import Event
 import random

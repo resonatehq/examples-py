@@ -4,6 +4,7 @@ from resonate.task_sources.poller import Poller
 from resonate.stores.remote import RemoteStore
 from resonate.resonate import Resonate
 from resonate.context import Context
+
 # highlight-next-line
 from resonate.targets import poll
 from flask import Flask, request, jsonify
@@ -18,6 +19,7 @@ resonate = Resonate(
     task_source=Poller(url="http://localhost:8002", group="gateway"),
 )
 
+
 # highlight-start
 # Define and register a top-level orchestrator coroutine
 @resonate.register
@@ -26,7 +28,10 @@ def dispatch(ctx: Context, url: str):
         send_to=poll("summarization-nodes")
     )
     return
+
+
 # highlight-end
+
 
 # Define a route handler for the /summarize endpoint
 @app.route("/summarize", methods=["POST"])
