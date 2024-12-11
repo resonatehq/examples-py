@@ -26,7 +26,7 @@ def downloadAndSummarize(ctx: Context, url: str, email: str):
         # Summarize the downloaded content
         summary = yield ctx.lfc(summarize, url, content)
 
-        # Create a DurabePromise to wait for confirmation
+        # Create a Durable Promise to wait for confirmation
         promise = yield ctx.rfi(DurablePromise(id=None))
 
         # Send an email with the summary

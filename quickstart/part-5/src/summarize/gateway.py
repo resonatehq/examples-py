@@ -10,7 +10,7 @@ import re
 
 app = Flask(__name__)
 
-# Create a Resonate Scheduler
+# Create an instance of Resonate
 store = RemoteStore(url="http://localhost:8001")
 resonate = Resonate(
     store=store, task_source=Poller(url="http://localhost:8002", group="gateway")

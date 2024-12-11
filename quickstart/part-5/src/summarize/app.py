@@ -11,7 +11,7 @@ import ollama
 import os
 
 
-# Initialize the Resonate Scheduler using the Resonate Server as remote storage
+# Initialize the Resonate using the Resonate Server as remote storage
 resonate = Resonate(
     store=RemoteStore(url="http://localhost:8001"),
     task_source=Poller(url="http://localhost:8002", group="summarization-nodes"),

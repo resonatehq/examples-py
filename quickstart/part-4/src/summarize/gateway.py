@@ -1,3 +1,5 @@
+# @@@SNIPSTART quickstart-py-part-4-gateway
+from resonate.task_sources.poller import Poller
 from resonate.stores.remote import RemoteStore
 from resonate.resonate import Resonate
 from resonate.context import Context
@@ -7,9 +9,12 @@ import json
 
 app = Flask(__name__)
 
-# Create a Resonate Scheduler
+# Create an instance of Resonate
+# highlight-next-line
 store = RemoteStore(url="http://localhost:8001")
-resonate = Resonate(store=store)
+resonate = Resonate(
+    store=store, task_source=Poller(url="http://localhost:8002", group="gateway")
+)
 
 
 # Define and register a top-level orchestrating coroutine
@@ -21,7 +26,6 @@ def dispatch(ctx: Context, url: str, email: str):
     return
 
 
-# @@@SNIPSTART quickstart-py-part-4-gateway-summarize-route
 # Define a route handler for the /summarize endpoint
 @app.route("/summarize", methods=["POST"])
 def summarize_route_handler():
@@ -44,10 +48,7 @@ def summarize_route_handler():
         return jsonify({"error": str(e)}), 500
 
 
-# @@@SNIPEND
-
-
-# @@@SNIPSTART quickstart-py-part-4-gateway-confirm-route
+# Define a route handler for the /confirm endpoint
 @app.route("/confirm", methods=["GET"])
 def confirm_email_route_handler():
     global store
@@ -55,11 +56,11 @@ def confirm_email_route_handler():
         # Extract parameters from the request
         promise_id = request.args.get("promise_id")
         confirm = request.args.get("confirm")
-    
+
         # Check if the required parameters are present
         if not promise_id or confirm is None:
             return jsonify({"error": "url and confirmation params are required"}), 400
-        
+
         # Convert to boolean
         confirm = confirm.lower() == "true"
 
@@ -79,9 +80,6 @@ def confirm_email_route_handler():
         return jsonify({"error": str(e)}), 500
 
 
-# @@@SNIPEND
-
-
 # Define a main function to start the Flask app
 def main():
     app.run(host="127.0.0.1", port=5000)
@@ -91,3 +89,5 @@ def main():
 # Run the main function when the script is executed
 if __name__ == "__main__":
     main()
+
+# @@@SNIPEND
