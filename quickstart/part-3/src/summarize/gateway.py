@@ -1,8 +1,10 @@
 # @@@SNIPSTART quickstart-py-part-3-gateway
+# highlight-next-line
 from resonate.task_sources.poller import Poller
 from resonate.stores.remote import RemoteStore
 from resonate.resonate import Resonate
 from resonate.context import Context
+# highlight-next-line
 from resonate.targets import poll
 from flask import Flask, request, jsonify
 
@@ -12,10 +14,11 @@ app = Flask(__name__)
 # Create an instance of Resonate
 resonate = Resonate(
     store=RemoteStore(url="http://localhost:8001"),
+    # highlight-next-line
     task_source=Poller(url="http://localhost:8002", group="gateway"),
 )
 
-
+# highlight-start
 # Define and register a top-level orchestrator coroutine
 @resonate.register
 def dispatch(ctx: Context, url: str):
@@ -23,7 +26,7 @@ def dispatch(ctx: Context, url: str):
         send_to=poll("summarization-nodes")
     )
     return
-
+# highlight-end
 
 # Define a route handler for the /summarize endpoint
 @app.route("/summarize", methods=["POST"])
@@ -39,6 +42,7 @@ def summarize_route_handler():
 
         # Use a Remote Function Invocation
 
+        # highlight-next-line
         dispatch.run(id=f"downloadAndSummarize-{url}", url=url)
 
         # Return the result as JSON
