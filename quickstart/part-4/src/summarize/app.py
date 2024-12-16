@@ -20,8 +20,7 @@ def downloadAndSummarize(ctx: Context, url: str, email: str):
     print("Downloading and summarizing content from", url)
     # Download the content from the provided URL
     content = yield ctx.lfc(download, url)
-    # Add a delay so you have time to simulate a failure
-    time.sleep(10)
+    # Loop until the summary is confirmed
     while True:
         # Summarize the downloaded content
         summary = yield ctx.lfc(summarize, url, content)
