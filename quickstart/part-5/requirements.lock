@@ -89,7 +89,7 @@ pysocks==1.7.1
 requests==2.32.3
     # via opentelemetry-exporter-otlp-proto-http
     # via resonate-sdk
-resonate-sdk==0.3.4
+resonate-sdk==0.3.5
     # via summarize
 selenium==4.26.1
     # via summarize
